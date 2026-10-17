@@ -74,9 +74,12 @@
   }
   setInterval(()=>{checkTimers();if(['clock','timer','pomodoro'].includes(state.mode))dirty=true;},250);
   // Pixel rendering uses one cached text raster; scrolling moves lit pixels only.
-  const canvas=$('display'),ctx=canvas.getContext('2d'),raster=document.createElement('canvas'),rctx=raster.getContext('2d',{willReadFrequently:true});
+  const canvas=$('display'),ctx=canvas.getContext('2d'),raster=document.createElement('canvas'),rctx=raster.getContext('2d',{willReadFrequently:true}),characterImage=$('nailongSprite');
   let width=0,height=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false,renderPitch=4;
   function invalidate(){dirty=true;cacheKey='';scrollOrigin=performance.now();}
+  function characterReady(){return characterImage.complete&&characterImage.naturalWidth===1536&&characterImage.naturalHeight===2288;}
+  characterImage.addEventListener('load',()=>{invalidate();if(!characterReady())toast('奶龙素材尺寸不正确，请重新下载离线版或联网更新');});
+  characterImage.addEventListener('error',()=>{invalidate();toast('奶龙素材加载失败，请联网重试或重新下载离线版');});
   function resize(){const rect=canvas.getBoundingClientRect();width=Math.max(1,Math.round(rect.width));height=Math.max(1,Math.round(rect.height));const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);pitch=Math.max(2.8,Math.min(6,width/170,height/75));const pattern=document.createElement('canvas');pattern.width=pattern.height=Math.round(pitch*dpr);const p=pattern.getContext('2d');p.fillStyle='#b5ce8620';const dot=Math.max(.6,pitch*dpr*.15);p.fillRect(0,0,dot,dot);bgPattern=ctx.createPattern(pattern,'repeat');dirty=true;cacheKey='';}
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('screen'));else window.addEventListener('resize',resize);
   function content(){
@@ -100,15 +103,15 @@
     for(let y=0;y<rasterH;y++)for(let x=0;x<rasterW;x++)if(data[(y*rasterW+x)*4+3]>100)points.push([x,y]);
     $('screenReader').textContent=text;canvas.setAttribute('aria-label',labels[state.mode][0]+'：'+text.replace(/\n/g,'，'));
   }
-  function startLaugh(){if(state.mode!=='nailong')return;laughStarted=performance.now();dirty=true;}
+  function startLaugh(){if(state.mode!=='nailong')return;if(!characterReady()){toast('奶龙素材尚未加载成功，请稍候或重新加载页面');return;}laughStarted=performance.now();dirty=true;}
   $('laugh').addEventListener('click',startLaugh);
   function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!(state.mode==='nailong'?laughStarted!==null:state.scroll))return;
     ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
     if(state.dots&&bgPattern){ctx.fillStyle=bgPattern;ctx.fillRect(0,0,width,height);}
     if(state.mode==='nailong'){
       const animation=D.laugh(laughStarted,now);if(!animation.active)laughStarted=null;
-      D.drawNailong(ctx,width,height,animation,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-      canvas.dataset.animation=animation.active?'laughing':'idle';canvas.setAttribute('aria-label',animation.active?'奶龙正在无声大笑，点击重播':'奶龙待机，点击大笑（无声）');
+      const ready=D.drawNailong(ctx,characterImage,width,height,animation,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      canvas.dataset.animation=ready?(animation.active?'laughing':'idle'):(characterImage.complete?'error':'loading');canvas.setAttribute('aria-label',!ready?'奶龙素材尚未加载成功':animation.active?'奶龙正在无声大笑，点击重播':'奶龙待机，点击大笑（无声）');
       $('screenReader').textContent=canvas.getAttribute('aria-label');$('previewInfo').textContent='奶龙模式 · 无声 · 点击大笑';$('displayHint').textContent='点击角色即可大笑，笑完自动回到待机';dirty=false;return;
     }
     delete canvas.dataset.animation;

@@ -33,44 +33,27 @@
   }
   function laugh(start,now){
     const elapsed=start===null?2400:Math.max(0,now-start);
-    return {active:elapsed<2400,phase:Math.floor(elapsed/130)%4,elapsed};
+    return {active:elapsed<2400,phase:Math.floor(elapsed/130)%5,elapsed};
   }
-  // Original hand-drawn pixel interpretation, not a clip from the official show.
-  function drawNailong(ctx,width,height,animation,reducedMotion){
-    const sprite=document.createElement('canvas');sprite.width=112;sprite.height=108;
-    const p=sprite.getContext('2d'),active=animation.active;
-    const bounce=active&&!reducedMotion?[0,-2,1,-1][animation.phase]:0;
-    const yellow='#ffd43c',shade='#eda92d',cream='#fff0a0',ink='#563b28';
-    const rect=(x,y,w,h,color)=>{p.fillStyle=color;p.fillRect(x,y+bounce,w,h);};
-    function oval(cx,cy,rx,ry,color){for(let y=-ry;y<=ry;y++){const x=Math.floor(rx*Math.sqrt(Math.max(0,1-y*y/(ry*ry))));rect(cx-x,cy+y,x*2+1,1,color);}}
-    function blob(cx,cy,rx,ry,color){oval(cx,cy,rx+2,ry+2,ink);oval(cx,cy,rx,ry,color);}
-    // Tail, orange back plates, feet and a round cream belly.
-    rect(79,69,16,9,ink);rect(82,67,9,9,yellow);rect(91,64,7,9,yellow);
-    rect(79,42,9,8,'#f18a30');rect(83,55,9,8,'#f18a30');rect(83,68,8,7,'#f18a30');
-    blob(44,91,13,5,shade);blob(72,91,13,5,shade);
-    blob(57,69,25,24,yellow);oval(57,75,17,17,cream);
-    blob(30,65+(active?-4:2),7,12,yellow);blob(84,65+(active?-4:2),7,12,yellow);
-    // Oversized head, soft snout and tiny orange crest.
-    blob(55,37,33,25,yellow);rect(51,9,7,5,'#f18a30');rect(60,10,6,5,'#f18a30');
-    oval(44,45,23,14,yellow);rect(27,44,2,2,shade);rect(34,42,2,2,shade);
-    if(active){
-      // Closed happy eyes, open laughing mouth, teeth and tongue.
-      rect(36,30,4,2,ink);rect(33,32,3,3,ink);rect(40,32,3,3,ink);
-      rect(66,30,4,2,ink);rect(63,32,3,3,ink);rect(70,32,3,3,ink);
-      oval(52,48,17,!reducedMotion&&animation.phase%2?12:14,ink);
-      rect(39,38,26,4,'#fff7df');oval(53,56,10,4,'#f17d83');
-      rect(23,39,7,3,'#f2a039');rect(77,39,7,3,'#f2a039');
-      if(!reducedMotion){rect(10,24,3,8,cream);rect(7,27,9,2,cream);rect(96,34,3,7,cream);rect(93,37,9,2,cream);}
-    }else{
-      oval(38,30,3,5,ink);oval(67,30,3,5,ink);rect(38,27,2,2,'#fff');rect(67,27,2,2,'#fff');
-      rect(41,48,21,2,ink);rect(39,46,2,2,ink);rect(62,46,2,2,ink);
+  // Source image is copied byte-for-byte from timerring/codex-pet-naiwa.
+  // Layout is not README preview order: row 4 is the five-frame belly laugh.
+  function spriteFrame(animation,reducedMotion){
+    const index=animation.active?(reducedMotion?2:animation.phase):0;
+    return {x:index*192,y:animation.active?4*208:0,width:192,height:208};
+  }
+  function drawNailong(ctx,sprite,width,height,animation,reducedMotion){
+    const active=animation.active,ready=sprite.complete&&sprite.naturalWidth===1536&&sprite.naturalHeight===2288;
+    if(ready){
+      const frame=spriteFrame(animation,reducedMotion);
+      const scale=Math.max(.1,Math.min(width*.76/frame.width,(height-36)*.92/frame.height));
+      const w=Math.round(frame.width*scale),h=Math.round(frame.height*scale);
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+      ctx.drawImage(sprite,frame.x,frame.y,frame.width,frame.height,Math.round((width-w)/2),Math.max(0,Math.round((height-h-30)/2)),w,h);
     }
-    const scale=Math.max(1,Math.floor(Math.min(width*.7/112,(height-36)*.9/108)));
-    ctx.imageSmoothingEnabled=false;
-    ctx.drawImage(sprite,Math.round((width-112*scale)/2),Math.max(0,Math.round((height-108*scale-30)/2)),112*scale,108*scale);
     ctx.fillStyle='#ffe48a';ctx.font='12px Pixel, monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
-    ctx.fillText(active?'哈哈哈哈！':'点一下 · 奶龙大笑',width/2,height-8);ctx.textAlign='start';
+    ctx.fillText(!ready?(sprite.complete?'素材加载失败，请重新加载':'素材加载中…'):active?'哈哈哈哈！':'点一下 · 奶龙大笑',width/2,height-8);ctx.textAlign='start';
+    return ready;
   }
-  const api={layout,laugh,drawNailong};root.JianguoDisplay=api;
+  const api={layout,laugh,spriteFrame,drawNailong};root.JianguoDisplay=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);

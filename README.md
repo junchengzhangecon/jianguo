@@ -1,6 +1,12 @@
 # 坚果像素屏 · Jianguo Pixel Studio
 
-把旧安卓手机变成像素信息屏。中文编辑、黑底点阵、可开关的滚动字幕、时钟、倒计时、番茄钟、工作状态、电子工牌和无声像素奶龙。横放展示优先，横竖屏均自适应；Mac 也能编辑预览。
+把旧安卓手机变成像素信息屏。中文编辑、黑底点阵、可开关的滚动字幕、时钟、倒计时、番茄钟、工作状态、电子工牌和无声奶龙。横放展示优先，横竖屏均自适应；Mac 也能编辑预览。
+
+## v1.1.1 更新
+
+- 按用户指定，移除旧手绘角色，直接使用 [timerring/codex-pet-naiwa](https://github.com/timerring/codex-pet-naiwa) 的原精灵表与捧腹大笑动作，不重新绘制角色。
+- 无声、点击播放、笑完回到待机；原图一起缓存，单文件版也内嵌同一原图，完全离线可用。
+- 素材来源、固定提交、校验值与权利说明见 LICENSES/naiwa-NOTICE.md。上游 MIT 不覆盖其第三方素材，本项目不会把该角色素材重新标成 MIT 授权或官方授权。
 
 ## v1.1.0 更新
 
@@ -9,7 +15,7 @@
 - 新增“奶龙模式”：点击角色或“大笑”按钮，无声大笑约 2.4 秒，之后回到待机，可再次点击。支持 Enter / 空格与减少动态效果设置，不调用外部视频、音频或 CDN。
 - 角色为手绘像素演绎，并非官方动画或官方授权素材；角色相关权利归原权利人，项目 MIT 仅适用于原创程序代码。
 
-旧版网页如果没有出现“奶龙模式”：联网打开页面，稍等缓存下载，然后关闭该网站**所有标签页和主屏幕窗口**，再重新打开。不要清除站点数据，以免丢失设置。旧的单文件 HTML 不会自动更新，需要重新下载 v1.1.0。
+旧版网页如果没有出现“奶龙模式”或仍显示旧手绘角色：联网打开页面，稍等缓存下载，然后关闭该网站**所有标签页和主屏幕窗口**，再重新打开。不要清除站点数据，以免丢失设置。旧的单文件 HTML 不会自动更新，需要重新下载 v1.1.1。
 
 ## 手机怎么用
 
@@ -64,6 +70,7 @@ npm start
 应用原创代码：MIT，见 LICENSE。
 
 - [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font)：12px 等宽简体中文，2026.10.16，OFL-1.1。原始许可和字形来源说明保存在 LICENSES/。
+- [codex-pet-naiwa](https://github.com/timerring/codex-pet-naiwa)：奶龙/奶蛙原精灵表；上游另致谢 [awesome_pets](https://github.com/Nitrogen216/awesome_pets) 和 [naiwa-pet](https://github.com/LynnShaw/naiwa-pet)。素材权利不属于本项目 MIT 许可范围，详见 LICENSES/naiwa-NOTICE.md。
 - 功能参考：[WebBanner](https://github.com/pauloklaus/web-banner)、[Hype Sign](https://github.com/howar31/hype-sign)。未复制这些项目的源码。
 - 后续方向：[AgentPager](https://github.com/afetmin/AgentPager) 的工作状态展示；实时接入尚未实现。
 

@@ -10,7 +10,9 @@ const html=await fs.readFile(path.join(root,'index.html'),'utf8');
 const font=(await fs.readFile(path.join(root,'assets/pixel.woff2'))).toString('base64');
 const css=(await fs.readFile(path.join(root,'styles.css'),'utf8')).replace('assets/pixel.woff2','data:font/woff2;base64,'+font);
 const icon=(await fs.readFile(path.join(root,'assets/icon.svg'))).toString('base64');
+const naiwasprite=(await fs.readFile(path.join(root,'assets/naiwa.webp'))).toString('base64');
 let standalone=html.replace(/<link rel="manifest"[^>]+>/,'').replace('href="assets/icon.svg"','href="data:image/svg+xml;base64,'+icon+'"').replace('<link rel="stylesheet" href="styles.css">','<style>'+css+'</style>');
+standalone=standalone.replace('src="assets/naiwa.webp"','src="data:image/webp;base64,'+naiwasprite+'"');
 async function licenseTexts(folder){let result='';for(const entry of await fs.readdir(folder,{withFileTypes:true})){const file=path.join(folder,entry.name);result+=entry.isDirectory()?await licenseTexts(file):'\n'+path.relative(root,file)+'\n'+await fs.readFile(file,'utf8');}return result;}
 const licenses=(await fs.readFile(path.join(root,'LICENSE'),'utf8'))+'\nFusion Pixel Font 2026.10.16 — https://github.com/TakWolf/fusion-pixel-font\n'+await licenseTexts(path.join(root,'LICENSES'));
 standalone=standalone.replace('<html lang="zh-CN">','<!--\n'+licenses.replace(/-->/g,'-- >')+'\n-->\n<html lang="zh-CN">');

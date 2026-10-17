@@ -21,7 +21,7 @@
       <button data-mode="badge" class="nav-item"><span>▣</span>电子工牌<small>06</small></button>
       <button data-mode="nailong" class="nav-item"><span>☺</span>奶龙模式<small>07</small></button>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.1.0</div></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.1.1</div></div>
   </aside>
   <main>
     <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
@@ -48,7 +48,7 @@
             <section data-panel="pomodoro" hidden><div class="two-fields"><div><label for="work">专注 / 分钟</label><input id="work" type="number" min="1" max="120"></div><div><label for="rest">休息 / 分钟</label><input id="rest" type="number" min="1" max="60"></div></div><p class="field-help">阶段结束后，手动开始下一阶段</p></section>
             <section data-panel="status" hidden><label for="status">当前状态</label><select id="status"><option>专注中</option><option>开会中</option><option>写作中</option><option>休息中</option><option>请勿打扰</option><option>欢迎交流</option></select><label for="note">补充一句</label><input id="note" maxlength="100" placeholder="请稍后再来"></section>
             <section data-panel="badge" hidden><label for="name">你的姓名</label><input id="name" maxlength="30"><label for="role">身份 / 职位</label><input id="role" maxlength="50"><label for="organization">机构 / 个性签名</label><input id="organization" maxlength="80"></section>
-            <section data-panel="nailong" hidden><div class="info-box">点击屏幕里的奶龙，大笑一下！<br>无声音 · 支持离线 · 笑完自动回到待机</div><button id="laugh" class="primary">让奶龙大笑 ☺</button><p class="field-help">手绘像素演绎，非官方动画素材。全屏下也能直接点击角色；键盘 Enter / 空格同样可用。</p></section>
+            <section data-panel="nailong" hidden><div class="info-box">点击屏幕里的奶龙，大笑一下！<br>无声音 · 支持离线 · 笑完自动回到待机</div><button id="laugh" class="primary">让奶龙大笑 ☺</button><p class="field-help">素材来自 <a href="https://github.com/timerring/codex-pet-naiwa" target="_blank" rel="noopener noreferrer">codex-pet-naiwa</a>，角色相关权利归原权利人。全屏也可点击；键盘 Enter / 空格同样可用。</p></section>
             <div id="textAppearance">
             <div class="control-group"><label>文字颜色 <span id="colorLabel">#B8F56B</span></label><div class="swatches" id="swatches"><button data-color="#b8f56b" style="--swatch:#b8f56b" aria-label="嫩芽绿"></button><button data-color="#ffca73" style="--swatch:#ffca73" aria-label="琥珀黄"></button><button data-color="#bfb2f5" style="--swatch:#bfb2f5" aria-label="浅紫色"></button><button data-color="#80d9ec" style="--swatch:#80d9ec" aria-label="天空蓝"></button><button data-color="#ff8e9b" style="--swatch:#ff8e9b" aria-label="珊瑚粉"></button><label class="custom-color" title="自定义颜色"><input id="color" type="color" aria-label="自定义文字颜色"><span>＋</span></label></div></div>
             <div class="control-group"><label for="size">像素字号 <span id="sizeLabel">24</span></label><input id="size" type="range" min="12" max="48" step="1"><div class="range-ends"><span>细腻</span><span>醒目</span></div></div>
@@ -68,5 +68,6 @@
 <div id="presentBar" hidden><button id="exitPresent">✕ 退出展示</button><span id="wakeState"></span></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <dialog id="shareDialog"><h2>把显示内容带到手机</h2><p>复制链接发给手机，打开即可导入当前配置。它不会实时同步后续修改。</p><textarea id="shareUrl" rows="4" readonly aria-label="配置分享链接"></textarea><p>链接包含你填写的文字，请只分享给需要的人。</p><button id="copyLink" class="primary">复制链接</button><button id="closeShare" class="secondary">关闭</button></dialog>
+<img id="nailongSprite" src="assets/naiwa.webp" hidden alt="" aria-hidden="true">
 <script src="core.js"></script><script src="display.js"></script><script src="app.js"></script>
 </body></html>

@@ -34,3 +34,14 @@ test('silent laugh finishes and can be replayed from a new start time',()=>{
 test('nailong mode survives configuration normalization and sharing',()=>{
   const c=require('../core.js');assert.equal(c.decode(c.encode({mode:'nailong'})).mode,'nailong');
 });
+test('repository artwork is copied verbatim rather than replaced with a drawing',()=>{
+  const file=require('node:path').join(__dirname,'../assets/naiwa.webp');
+  assert.ok(fs.existsSync(file),'缺少用户指定仓库的原精灵表');
+  assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync(file)).digest('hex'),'e86e8b61584df7897ef7a60c3ba6a8dd92a798b3a5bdba5080351a896927f588');
+});
+test('laugh uses all five belly-laugh frames from row 4, not running row 2',()=>{
+  const d=display();assert.equal(typeof d.spriteFrame,'function','尚未接入原仓库帧映射');
+  for(let i=0;i<5;i++){const f=d.spriteFrame(d.laugh(0,i*130),false);assert.deepEqual(f,{x:i*192,y:4*208,width:192,height:208});}
+  assert.deepEqual(d.spriteFrame(d.laugh(null,0),false),{x:0,y:0,width:192,height:208});
+  assert.deepEqual(d.spriteFrame(d.laugh(0,500),true),d.spriteFrame(d.laugh(0,1000),true));
+});
