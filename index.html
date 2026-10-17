@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5ef"><meta name="description" content="把旧手机变成你的像素信息屏。自定义文字、滚动字幕、时钟、倒计时、番茄钟和电子工牌，支持离线使用。">
+  <title>坚果像素屏 · Jianguo Studio</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="studio" id="studio">
+  <aside class="sidebar">
+    <a class="brand" href="./" aria-label="坚果像素屏首页"><span class="brandmark">▦</span><span>jianguo<span class="brand-sub">PIXEL STUDIO</span></span></a>
+    <div class="nav-label">我的显示屏</div>
+    <nav id="modes" aria-label="内容模式">
+      <button data-mode="text" class="nav-item active"><span>▤</span>像素文字<small>01</small></button>
+      <button data-mode="clock" class="nav-item"><span>◷</span>像素时钟<small>02</small></button>
+      <button data-mode="timer" class="nav-item"><span>◴</span>倒计时<small>03</small></button>
+      <button data-mode="pomodoro" class="nav-item"><span>◉</span>番茄钟<small>04</small></button>
+      <button data-mode="status" class="nav-item"><span>▰</span>工作状态<small>05</small></button>
+      <button data-mode="badge" class="nav-item"><span>▣</span>电子工牌<small>06</small></button>
+    </nav>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.0</div></div>
+  </aside>
+  <main>
+    <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
+    <section class="workspace">
+      <div class="page-heading"><div><div class="eyebrow">A LITTLE SCREEN. YOUR OWN WORLD.</div><h1>让旧手机，重新发光<span class="heading-dot">.</span></h1><p>一句话、一段专注时间，或是此刻的你。让它在这里显示。</p></div><span class="version-tag">无需账号 / 支持离线</span></div>
+      <div class="work-grid">
+        <section class="preview-column">
+          <div class="section-line"><h2>显示预览</h2><span><i class="live-dot"></i> LIVE PREVIEW</span></div>
+          <div class="device-shell" id="deviceShell">
+            <div class="device-top"><span><i></i> JIANGUO DISPLAY</span><span id="modeLabel">TEXT MODE</span></div>
+            <div class="screen" id="screen"><canvas id="display" aria-label="像素显示预览" role="img"></canvas><span id="screenReader" class="sr-only" aria-live="off"></span></div>
+            <div class="device-bottom"><span id="previewInfo">中文像素 · 本地渲染</span><span>● ● ●</span></div>
+          </div>
+          <div class="preview-actions"><span id="displayHint">横放手机，效果更好</span><button id="present" class="primary">进入全屏展示 <span>↗</span></button></div>
+          <div class="timer-actions" id="timerActions" hidden><button id="timerStart" class="primary">开始计时</button><button id="timerReset" class="secondary">重置</button><button id="nextPhase" class="secondary" hidden>进入休息</button><span id="timerState" role="status"></span></div>
+          <div class="presets"><div class="section-line"><h2>灵感快捷选</h2><span>一点即用</span></div><div class="preset-grid"><button data-preset="focus"><span class="sample green">FOCUS</span><strong>专注此刻</strong><small>给自己一段安静时间</small></button><button data-preset="hello"><span class="sample amber">HELLO!</span><strong>打个招呼</strong><small>把好心情放在桌面</small></button><button data-preset="name"><span class="sample lilac">NAME</span><strong>这是我的位置</strong><small>一张不一样的工牌</small></button></div></div>
+          <div class="offline-note"><span class="note-icon">↳</span><div><strong id="offlineTitle">离线也能发光</strong><p id="offlineHelp">下载单文件离线版，传到手机后用浏览器打开，无需网络。网页版首次加载后可缓存使用。</p></div></div>
+        </section>
+        <aside class="settings"><div class="settings-heading"><h2>让它成为你的</h2><span>✳</span></div>
+          <div class="settings-content">
+            <section data-panel="text"><label for="text">显示文字 <span id="charCount">9 / 600</span></label><textarea id="text" maxlength="1200" rows="4" placeholder="写下想展示的内容…"></textarea><p class="field-help">支持中文、英文和换行</p></section>
+            <section data-panel="clock" hidden><div class="info-box">显示设备本地时间与日期。<br>离线可用，时间以手机系统时钟为准。</div></section>
+            <section data-panel="timer" hidden><label for="minutes">倒计时分钟数</label><input id="minutes" type="number" min="1" max="180"><p class="field-help">1—180 分钟，修改时会重置此倒计时</p></section>
+            <section data-panel="pomodoro" hidden><div class="two-fields"><div><label for="work">专注 / 分钟</label><input id="work" type="number" min="1" max="120"></div><div><label for="rest">休息 / 分钟</label><input id="rest" type="number" min="1" max="60"></div></div><p class="field-help">阶段结束后，手动开始下一阶段</p></section>
+            <section data-panel="status" hidden><label for="status">当前状态</label><select id="status"><option>专注中</option><option>开会中</option><option>写作中</option><option>休息中</option><option>请勿打扰</option><option>欢迎交流</option></select><label for="note">补充一句</label><input id="note" maxlength="100" placeholder="请稍后再来"></section>
+            <section data-panel="badge" hidden><label for="name">你的姓名</label><input id="name" maxlength="30"><label for="role">身份 / 职位</label><input id="role" maxlength="50"><label for="organization">机构 / 个性签名</label><input id="organization" maxlength="80"></section>
+            <div class="control-group"><label>文字颜色 <span id="colorLabel">#B8F56B</span></label><div class="swatches" id="swatches"><button data-color="#b8f56b" style="--swatch:#b8f56b" aria-label="嫩芽绿"></button><button data-color="#ffca73" style="--swatch:#ffca73" aria-label="琥珀黄"></button><button data-color="#bfb2f5" style="--swatch:#bfb2f5" aria-label="浅紫色"></button><button data-color="#80d9ec" style="--swatch:#80d9ec" aria-label="天空蓝"></button><button data-color="#ff8e9b" style="--swatch:#ff8e9b" aria-label="珊瑚粉"></button><label class="custom-color" title="自定义颜色"><input id="color" type="color" aria-label="自定义文字颜色"><span>＋</span></label></div></div>
+            <div class="control-group"><label for="size">像素字号 <span id="sizeLabel">24</span></label><input id="size" type="range" min="12" max="48" step="1"><div class="range-ends"><span>细腻</span><span>醒目</span></div></div>
+            <div class="toggle-row"><div><label for="scroll">滚动字幕</label><p>让文字流动起来</p></div><input id="scroll" class="toggle" type="checkbox" role="switch"></div>
+            <div id="scrollOptions" hidden><label for="speed">滚动速度 <span id="speedLabel">35</span></label><input id="speed" type="range" min="5" max="100"><label for="direction">滚动方向</label><select id="direction"><option value="left">向左 ←</option><option value="right">向右 →</option></select></div>
+            <div class="toggle-row"><div><label for="dots">点阵底纹</label><p>保留一点复古质感</p></div><input id="dots" class="toggle" type="checkbox" role="switch"></div>
+            <div class="toggle-row" id="soundRow" hidden><div><label for="sound">完成提示音</label><p>仅页面活跃时可靠，需先点击开始</p></div><input id="sound" class="toggle" type="checkbox" role="switch"></div>
+            <button id="resetSettings" class="reset-button">↻ 恢复默认设置</button>
+          </div>
+        </aside>
+      </div>
+      <footer>小屏幕，大有可为。<span>JIANGUO PIXEL STUDIO <span class="footer-leaf">✳</span> MADE FOR YOUR DESK</span></footer>
+    </section>
+  </main>
+</div>
+<div id="presentBar" hidden><button id="exitPresent">✕ 退出展示</button><span id="wakeState"></span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="shareDialog"><h2>把显示内容带到手机</h2><p>复制链接发给手机，打开即可导入当前配置。它不会实时同步后续修改。</p><textarea id="shareUrl" rows="4" readonly aria-label="配置分享链接"></textarea><p>链接包含你填写的文字，请只分享给需要的人。</p><button id="copyLink" class="primary">复制链接</button><button id="closeShare" class="secondary">关闭</button></dialog>
+<script src="core.js"></script><script src="app.js"></script>
+</body></html>
