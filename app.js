@@ -3,7 +3,7 @@
   const C=window.JianguoCore,D=window.JianguoDisplay,$=id=>document.getElementById(id);
   const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE'],nailong:['奶龙模式','NAILONG · SILENT']};
   let laughStarted=null;
-  let storageOK=true,phase='work',count=0,presenting=false,wake=null,audio=null;
+  let storageOK=true,phase='work',count=0,presenting=false,audio=null;
   function read(k){try{return JSON.parse(localStorage.getItem(k));}catch(_){storageOK=false;return null;}}
   function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){storageOK=false;}}
   let saved=read('jianguo.state.v1'),state=C.normalize(saved);
@@ -125,17 +125,42 @@
   function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();}
   async function loadFont(){try{if(document.fonts){await document.fonts.load('12px Pixel');fontReady=document.fonts.check('12px Pixel');}}catch(_){}invalidate();if(!fontReady)toast('像素字体加载失败，已使用系统字体');}
   let presentHide;
+  let keepAwakeMode=read('jianguo.wake.v1');if(!['auto','compat','off'].includes(keepAwakeMode))keepAwakeMode='auto';
+  const nativeWakeAvailable=Boolean(window.isSecureContext&&navigator.wakeLock&&typeof navigator.wakeLock.request==='function');
+  const wakeController=window.JianguoWake.createController({
+    isVisible:()=>!document.hidden,
+    requestNative:nativeWakeAvailable?()=>navigator.wakeLock.request('screen'):undefined,
+    makeVideo:()=>{
+      const v=document.createElement('video');v.id='keepAwakeVideo';v.className='wake-video';v.muted=true;v.defaultMuted=true;v.volume=0;v.loop=true;v.playsInline=true;v.preload='auto';v.tabIndex=-1;
+      v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('aria-hidden','true');v.disablePictureInPicture=true;v.disableRemotePlayback=true;
+      let failedSources=0;
+      for(const type of ['webm','mp4']){const s=document.createElement('source');s.type='video/'+type;s.src=$('wakeMedia').dataset[type];s.addEventListener('error',()=>{if(++failedSources===2)v.dispatchEvent(new Event('error'));});v.append(s);}
+      v.addEventListener('timeupdate',()=>{if(v.duration>1&&v.currentTime>.5){try{v.currentTime=.1;}catch(_){}}});
+      document.body.append(v);return v;
+    },
+    onStatus:s=>{
+      const descriptions={off:'防息屏已关闭',paused:'页面不在前台，已暂停保活',pending:'正在申请常亮 / 启动兼容播放…',native:'标准常亮已取得',dual:'标准常亮 + 兼容保活播放中',video:'兼容保活播放中（需真机确认效果）','needs-gesture':'需要点击「应用 / 重试」启动兼容保活',failed:'常亮未生效：请重试或切换增强兼容'};
+      const short={off:'常亮已关闭',paused:'保活已暂停',pending:'正在申请常亮',native:'标准常亮有效',dual:'标准 + 兼容保活',video:'兼容保活播放中','needs-gesture':'点击常亮重试',failed:'常亮未生效，请重试'};
+      $('wakeStatus').textContent=s.mode==='compat'&&s.method==='native'&&!s.videoError?'标准常亮已取得；兼容视频待点击「应用 / 重试」':descriptions[s.method];$('wakeStatus').dataset.method=s.method;$('wakeState').textContent=short[s.method];
+      $('wakeDiagnostics').textContent='标准接口：'+(s.nativeSupported?'可用':'不支持')+' · 页面：'+(window.isSecureContext?'安全上下文':'非 HTTPS')+' · '+(document.hidden?'后台':'前台')+(s.nativeError?' · 系统：'+s.nativeError:'')+(s.videoError?' · 视频：'+s.videoError:'');
+    }
+  });
+  $('keepAwakeMode').value=keepAwakeMode;
+  $('keepAwakeMode').addEventListener('change',()=>{keepAwakeMode=$('keepAwakeMode').value;write('jianguo.wake.v1',keepAwakeMode);wakeController.setMode(keepAwakeMode,{gesture:true});});
+  $('wakeRetry').addEventListener('click',()=>wakeController.resume({gesture:true}));
+  $('wakeRetryPresent').addEventListener('click',()=>{showPresentBar();wakeController.resume({gesture:true});});
   function showPresentBar(){if(!presenting)return;$('presentBar').classList.remove('dim');clearTimeout(presentHide);presentHide=setTimeout(()=>$('presentBar').classList.add('dim'),4000);}
-  async function getWake(){if(!presenting||document.hidden)return;try{if('wakeLock'in navigator){wake=await navigator.wakeLock.request('screen');$('wakeState').textContent='屏幕常亮已开启';wake.addEventListener('release',()=>{wake=null;if(presenting)$('wakeState').textContent='常亮已释放，轻触重试';});}else $('wakeState').textContent='浏览器不支持常亮，请调整手机息屏时间';}catch(_){$('wakeState').textContent='常亮未开启，请调整手机息屏时间';}}
-  $('present').addEventListener('click',()=>{presenting=true;document.body.classList.add('present');$('presentBar').hidden=false;unlockAudio();const request=document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen;if(request){try{const result=request.call(document.documentElement);if(result&&result.catch)result.catch(()=>toast('已进入沉浸展示；浏览器未允许系统全屏'));}catch(_){}}getWake();showPresentBar();resize();});
-  async function exitPresent(){presenting=false;document.body.classList.remove('present');$('presentBar').hidden=true;clearTimeout(presentHide);if(wake){try{await wake.release();}catch(_){}wake=null;}if(document.fullscreenElement){try{await document.exitFullscreen();}catch(_){}}resize();}
+  $('present').addEventListener('click',()=>{presenting=true;document.body.classList.add('present');$('presentBar').hidden=false;wakeController.resume({gesture:true});unlockAudio();const request=document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen;if(request){try{const result=request.call(document.documentElement);if(result&&result.catch)result.catch(()=>toast('已进入沉浸展示；浏览器未允许系统全屏'));}catch(_){}}showPresentBar();resize();});
+  async function exitPresent(){presenting=false;document.body.classList.remove('present');$('presentBar').hidden=true;clearTimeout(presentHide);if(document.fullscreenElement){try{await document.exitFullscreen();}catch(_){}}resize();}
   $('exitPresent').addEventListener('click',exitPresent);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&presenting)exitPresent();});
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&presenting)exitPresent();});
-  canvas.addEventListener('click',()=>{startLaugh();showPresentBar();if(presenting&&!wake)getWake();});
+  canvas.addEventListener('click',()=>{startLaugh();showPresentBar();wakeController.resume({gesture:true});});
   canvas.addEventListener('keydown',e=>{if(state.mode==='nailong'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();startLaugh();}});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkTimers();invalidate();if(presenting)getWake();}});
-  window.addEventListener('pagehide',persist);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkTimers();invalidate();wakeController.resume();}else wakeController.suspend();});
+  window.addEventListener('pagehide',()=>{persist();wakeController.suspend();});
+  window.addEventListener('pageshow',()=>wakeController.resume());
+  window.addEventListener('focus',()=>wakeController.resume());
   $('share').addEventListener('click',()=>{
     const base=location.protocol==='file:'?'https://junchengzhangecon.github.io/jianguo/':location.href.split('#')[0];
     $('shareUrl').value=base+'#s='+C.encode(state);
@@ -156,7 +181,7 @@
       navigator.serviceWorker.addEventListener('message',status);await status();setTimeout(status,1000);
     }catch(_){$('offlineHelp').textContent='浏览器未能建立离线缓存，请使用单文件离线版。';}
   }
-  paintControls();resize();loadFont();requestAnimationFrame(frame);checkTimers();initOffline();
+  paintControls();resize();loadFont();requestAnimationFrame(frame);checkTimers();initOffline();wakeController.setMode(keepAwakeMode);
   window.addEventListener('online',()=>{if(location.protocol!=='file:')$('connection').textContent='网络已连接 · 设置保存在本机';});
   window.addEventListener('offline',()=>{$('connection').textContent='离线模式 · 本机运行中';});
   if(!storageOK)toast('浏览器未允许保存设置；当前可用，但关闭后可能无法恢复');

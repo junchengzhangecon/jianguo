@@ -1,5 +1,5 @@
-const CACHE='jianguo-pixel-v1.1.1';
-const FILES=['./','index.html','styles.css','core.js','display.js','app.js','assets/pixel.woff2','assets/naiwa.webp','assets/icon.svg','assets/icon-192.png','assets/icon-512.png','manifest.webmanifest','坚果像素屏-离线版.html'];
+const CACHE='jianguo-pixel-v1.2.0';
+const FILES=['./','index.html','styles.css','core.js','display.js','wake.js','app.js','assets/pixel.woff2','assets/naiwa.webp','assets/wake.webm','assets/wake.mp4','assets/icon.svg','assets/icon-192.png','assets/icon-512.png','manifest.webmanifest','坚果像素屏-离线版.html'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES))));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('jianguo-pixel-')&&k!==CACHE).map(k=>caches.delete(k)));await self.clients.claim();for(const client of await self.clients.matchAll())client.postMessage({offlineReady:true});})()));
 self.addEventListener('fetch',event=>{

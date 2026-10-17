@@ -21,7 +21,7 @@
       <button data-mode="badge" class="nav-item"><span>▣</span>电子工牌<small>06</small></button>
       <button data-mode="nailong" class="nav-item"><span>☺</span>奶龙模式<small>07</small></button>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.1.1</div></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.2.0</div></div>
   </aside>
   <main>
     <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
@@ -36,6 +36,13 @@
             <div class="device-bottom"><span id="previewInfo">中文像素 · 本地渲染</span><span>● ● ●</span></div>
           </div>
           <div class="preview-actions"><span id="displayHint">横放手机，效果更好</span><button id="present" class="primary">进入全屏展示 <span>↗</span></button></div>
+          <section class="wake-panel" aria-labelledby="wakeTitle">
+            <div class="wake-heading"><h2 id="wakeTitle">防息屏 / 保持唤醒</h2><span>本机设置 · 不随分享链接传递</span></div>
+            <div class="wake-controls"><label for="keepAwakeMode" class="sr-only">保持唤醒模式</label><select id="keepAwakeMode"><option value="auto">自动：优先系统常亮</option><option value="compat">增强兼容：无声视频保活</option><option value="off">关闭：允许系统正常休眠</option></select><button id="wakeRetry" class="secondary">应用 / 重试</button></div>
+            <p id="wakeStatus" role="status" aria-live="polite">等待申请常亮</p><p id="wakeDiagnostics"></p>
+            <p class="wake-help">自带旧浏览器建议尝试「增强兼容」，选择后点一次「应用 / 重试」。只在本页前台时运行，耗电可能增加。兼容视频播放中不代表系统保证常亮。</p>
+            <p class="wake-help">如果只是变暗但内容还在，也请检查手机的自动亮度和省电模式。网页不能修改系统亮度或阻止系统保护性调暗。</p>
+          </section>
           <div class="timer-actions" id="timerActions" hidden><button id="timerStart" class="primary">开始计时</button><button id="timerReset" class="secondary">重置</button><button id="nextPhase" class="secondary" hidden>进入休息</button><span id="timerState" role="status"></span></div>
           <div class="presets"><div class="section-line"><h2>灵感快捷选</h2><span>一点即用</span></div><div class="preset-grid"><button data-preset="focus"><span class="sample green">FOCUS</span><strong>专注此刻</strong><small>给自己一段安静时间</small></button><button data-preset="hello"><span class="sample amber">HELLO!</span><strong>打个招呼</strong><small>把好心情放在桌面</small></button><button data-preset="name"><span class="sample lilac">NAME</span><strong>这是我的位置</strong><small>一张不一样的工牌</small></button></div></div>
           <div class="offline-note"><span class="note-icon">↳</span><div><strong id="offlineTitle">离线也能发光</strong><p id="offlineHelp">下载单文件离线版，传到手机后用浏览器打开，无需网络。网页版首次加载后可缓存使用。</p></div></div>
@@ -65,9 +72,10 @@
     </section>
   </main>
 </div>
-<div id="presentBar" hidden><button id="exitPresent">✕ 退出展示</button><span id="wakeState"></span></div>
+<div id="presentBar" hidden><button id="exitPresent">✕ 退出展示</button><div class="present-wake"><span id="wakeState"></span><button id="wakeRetryPresent">常亮重试</button></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <dialog id="shareDialog"><h2>把显示内容带到手机</h2><p>复制链接发给手机，打开即可导入当前配置。它不会实时同步后续修改。</p><textarea id="shareUrl" rows="4" readonly aria-label="配置分享链接"></textarea><p>链接包含你填写的文字，请只分享给需要的人。</p><button id="copyLink" class="primary">复制链接</button><button id="closeShare" class="secondary">关闭</button></dialog>
 <img id="nailongSprite" src="assets/naiwa.webp" hidden alt="" aria-hidden="true">
-<script src="core.js"></script><script src="display.js"></script><script src="app.js"></script>
+<div id="wakeMedia" hidden data-webm="assets/wake.webm" data-mp4="assets/wake.mp4"></div>
+<script src="core.js"></script><script src="display.js"></script><script src="wake.js"></script><script src="app.js"></script>
 </body></html>

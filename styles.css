@@ -10,6 +10,9 @@ body.present #display{position:absolute;left:max(16px,env(safe-area-inset-left))
 #display[role=button]{cursor:pointer;touch-action:manipulation}
 #display:focus-visible{outline:3px solid #ffe48a;outline-offset:-4px}
 #laugh{margin-top:16px}
+.wake-panel{border:1px solid var(--line);border-radius:10px;background:#fafbf6;padding:16px;margin-top:18px}
+.wake-heading,.wake-controls{display:flex;gap:10px;align-items:center;justify-content:space-between}.wake-heading h2{font-size:12px;margin:0}.wake-heading span{font-size:9px;color:#8a927f}.wake-controls{margin-top:12px}.wake-controls select{flex:1;min-width:0}.wake-panel p{font-size:10px;line-height:1.8;margin:9px 0 0;color:#7c866f}#wakeStatus{font-weight:600;color:#3c582d}.wake-panel .wake-help{font-size:10px}#wakeDiagnostics{font-family:monospace;font-size:9px;overflow-wrap:anywhere}.present-wake{display:flex;align-items:center;gap:7px;max-width:70%}#wakeState{overflow-wrap:anywhere}.wake-video{position:fixed;bottom:0;left:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:0}body.present .wake-panel{display:none!important}
+@media(max-width:420px){.wake-heading{align-items:flex-start;flex-direction:column;gap:5px}.wake-controls{align-items:stretch;flex-direction:column}.present-wake{max-width:65%;gap:3px}#wakeState{font-size:9px}#wakeRetryPresent{padding:8px;font-size:10px}}
 .sidebar{top:0;bottom:0;left:0}
 .screen{height:260px}
 @supports(aspect-ratio:16/9){.screen{height:auto}}
