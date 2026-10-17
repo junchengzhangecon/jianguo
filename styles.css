@@ -7,6 +7,9 @@
 @media(prefers-reduced-motion:reduce){*{transition:none!important}.preset-grid>button:hover{transform:none}}
 body.present #display{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));width:calc(100% - max(16px,env(safe-area-inset-left)) - max(16px,env(safe-area-inset-right)));height:calc(100% - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)))}
 /* Older Android WebViews ignore inset/aspect-ratio/max(); retain usable geometry. */
+#display[role=button]{cursor:pointer;touch-action:manipulation}
+#display:focus-visible{outline:3px solid #ffe48a;outline-offset:-4px}
+#laugh{margin-top:16px}
 .sidebar{top:0;bottom:0;left:0}
 .screen{height:260px}
 @supports(aspect-ratio:16/9){.screen{height:auto}}

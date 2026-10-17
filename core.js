@@ -5,7 +5,7 @@
   const text=(v,d,max)=>typeof v==='string'?Array.from(v).slice(0,max).join(''):d;
   function normalize(value){
     const s=value&&typeof value==='object'?value:{};const d=defaults;
-    return {...d,mode:['text','clock','timer','pomodoro','status','badge'].includes(s.mode)?s.mode:d.mode,
+    return {...d,mode:['text','clock','timer','pomodoro','status','badge','nailong'].includes(s.mode)?s.mode:d.mode,
       text:text(s.text,d.text,600), color:/^#[\da-f]{6}$/i.test(s.color)?s.color:d.color,
       background:/^#[\da-f]{6}$/i.test(s.background)?s.background:d.background,
       size:num(s.size,d.size,12,48),speed:num(s.speed,d.speed,5,100),scroll:typeof s.scroll==='boolean'?s.scroll:d.scroll,

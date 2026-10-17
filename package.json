@@ -1,1 +1,1 @@
-{"name":"jianguo-pixel-studio","version":"1.0.0","private":true,"description":"Offline-first pixel display for a second life of old phones","scripts":{"test":"node --test tests/core.test.cjs","build":"node scripts/build.mjs","start":"node scripts/serve.mjs"}}
+{"name":"jianguo-pixel-studio","version":"1.1.0","private":true,"description":"Offline-first pixel display for a second life of old phones","scripts":{"test":"node --test tests/*.test.cjs","build":"node scripts/build.mjs","start":"node scripts/serve.mjs"}}

@@ -441,6 +441,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 @media(prefers-reduced-motion:reduce){*{transition:none!important}.preset-grid>button:hover{transform:none}}
 body.present #display{position:absolute;left:max(16px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));width:calc(100% - max(16px,env(safe-area-inset-left)) - max(16px,env(safe-area-inset-right)));height:calc(100% - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)))}
 /* Older Android WebViews ignore inset/aspect-ratio/max(); retain usable geometry. */
+#display[role=button]{cursor:pointer;touch-action:manipulation}
+#display:focus-visible{outline:3px solid #ffe48a;outline-offset:-4px}
+#laugh{margin-top:16px}
 .sidebar{top:0;bottom:0;left:0}
 .screen{height:260px}
 @supports(aspect-ratio:16/9){.screen{height:auto}}
@@ -469,8 +472,9 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
       <button data-mode="pomodoro" class="nav-item"><span>◉</span>番茄钟<small>04</small></button>
       <button data-mode="status" class="nav-item"><span>▰</span>工作状态<small>05</small></button>
       <button data-mode="badge" class="nav-item"><span>▣</span>电子工牌<small>06</small></button>
+      <button data-mode="nailong" class="nav-item"><span>☺</span>奶龙模式<small>07</small></button>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.0</div></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.1.0</div></div>
   </aside>
   <main>
     <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
@@ -497,10 +501,13 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
             <section data-panel="pomodoro" hidden><div class="two-fields"><div><label for="work">专注 / 分钟</label><input id="work" type="number" min="1" max="120"></div><div><label for="rest">休息 / 分钟</label><input id="rest" type="number" min="1" max="60"></div></div><p class="field-help">阶段结束后，手动开始下一阶段</p></section>
             <section data-panel="status" hidden><label for="status">当前状态</label><select id="status"><option>专注中</option><option>开会中</option><option>写作中</option><option>休息中</option><option>请勿打扰</option><option>欢迎交流</option></select><label for="note">补充一句</label><input id="note" maxlength="100" placeholder="请稍后再来"></section>
             <section data-panel="badge" hidden><label for="name">你的姓名</label><input id="name" maxlength="30"><label for="role">身份 / 职位</label><input id="role" maxlength="50"><label for="organization">机构 / 个性签名</label><input id="organization" maxlength="80"></section>
+            <section data-panel="nailong" hidden><div class="info-box">点击屏幕里的奶龙，大笑一下！<br>无声音 · 支持离线 · 笑完自动回到待机</div><button id="laugh" class="primary">让奶龙大笑 ☺</button><p class="field-help">手绘像素演绎，非官方动画素材。全屏下也能直接点击角色；键盘 Enter / 空格同样可用。</p></section>
+            <div id="textAppearance">
             <div class="control-group"><label>文字颜色 <span id="colorLabel">#B8F56B</span></label><div class="swatches" id="swatches"><button data-color="#b8f56b" style="--swatch:#b8f56b" aria-label="嫩芽绿"></button><button data-color="#ffca73" style="--swatch:#ffca73" aria-label="琥珀黄"></button><button data-color="#bfb2f5" style="--swatch:#bfb2f5" aria-label="浅紫色"></button><button data-color="#80d9ec" style="--swatch:#80d9ec" aria-label="天空蓝"></button><button data-color="#ff8e9b" style="--swatch:#ff8e9b" aria-label="珊瑚粉"></button><label class="custom-color" title="自定义颜色"><input id="color" type="color" aria-label="自定义文字颜色"><span>＋</span></label></div></div>
             <div class="control-group"><label for="size">像素字号 <span id="sizeLabel">24</span></label><input id="size" type="range" min="12" max="48" step="1"><div class="range-ends"><span>细腻</span><span>醒目</span></div></div>
             <div class="toggle-row"><div><label for="scroll">滚动字幕</label><p>让文字流动起来</p></div><input id="scroll" class="toggle" type="checkbox" role="switch"></div>
             <div id="scrollOptions" hidden><label for="speed">滚动速度 <span id="speedLabel">35</span></label><input id="speed" type="range" min="5" max="100"><label for="direction">滚动方向</label><select id="direction"><option value="left">向左 ←</option><option value="right">向右 →</option></select></div>
+            </div>
             <div class="toggle-row"><div><label for="dots">点阵底纹</label><p>保留一点复古质感</p></div><input id="dots" class="toggle" type="checkbox" role="switch"></div>
             <div class="toggle-row" id="soundRow" hidden><div><label for="sound">完成提示音</label><p>仅页面活跃时可靠，需先点击开始</p></div><input id="sound" class="toggle" type="checkbox" role="switch"></div>
             <button id="resetSettings" class="reset-button">↻ 恢复默认设置</button>
@@ -521,7 +528,7 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
   const text=(v,d,max)=>typeof v==='string'?Array.from(v).slice(0,max).join(''):d;
   function normalize(value){
     const s=value&&typeof value==='object'?value:{};const d=defaults;
-    return {...d,mode:['text','clock','timer','pomodoro','status','badge'].includes(s.mode)?s.mode:d.mode,
+    return {...d,mode:['text','clock','timer','pomodoro','status','badge','nailong'].includes(s.mode)?s.mode:d.mode,
       text:text(s.text,d.text,600), color:/^#[\da-f]{6}$/i.test(s.color)?s.color:d.color,
       background:/^#[\da-f]{6}$/i.test(s.background)?s.background:d.background,
       size:num(s.size,d.size,12,48),speed:num(s.speed,d.speed,5,100),scroll:typeof s.scroll==='boolean'?s.scroll:d.scroll,
@@ -545,10 +552,87 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
   const api={defaults,normalize,encode,decode,newTimer,remaining,start,pause,tick,restoreTimer,formatTime,nextPhase:p=>p==='work'?'rest':'work'};
   root.JianguoCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);
+</script><script>(function(root){
+  'use strict';
+  // Fusion Pixel is a 12px bitmap font. Keep its native grid; fit the whole
+  // composition instead of downsampling individual letters into merged strokes.
+  function layout(text,options,measure){
+    const {width,height,size=24,mode='text',scroll=false}=options;
+    const base=Math.max(12,Math.floor(size/12)*12),padding=4;
+    const limit=Math.max(24,Math.floor(width*.86/1.25));
+    const rows=[];
+    function add(line,font){
+      const spacing=Math.max(1,font/12);
+      const chars=Array.from(line);
+      const rowWidth=s=>Math.max(1,measure(s,font)+Math.max(0,Array.from(s).length-1)*spacing);
+      if(scroll){rows.push({text:line,size:font,spacing,width:rowWidth(line)});return;}
+      let part='';
+      for(const char of chars){
+        if(part&&rowWidth(part+char)>limit){rows.push({text:part,size:font,spacing,width:rowWidth(part)});part='';}
+        part+=char;
+      }
+      rows.push({text:part,size:font,spacing,width:rowWidth(part)});
+    }
+    (scroll?[text.replace(/\n/g,'   ')]:text.split('\n')).forEach((line,i)=>add(line,mode==='badge'&&i>0?Math.max(12,base-12):base));
+    function place(){let y=padding;for(const row of rows){row.y=y;y+=Math.ceil(row.size*1.3)+Math.max(6,row.size*.5);}return {width:Math.ceil(Math.max(1,...rows.map(r=>r.width)))+padding*2,height:y+padding};}
+    let box=place();
+    const preferred=Math.max(1.5,Math.min(5,width/150,height/65));
+    let pitch=Math.min(preferred,height*.82/box.height,scroll?preferred:width*.88/box.width);
+    if(!scroll&&pitch<1.25&&base>12)return layout(text,{...options,size:base-12},measure);
+    const crowded=!scroll&&pitch<1.25;
+    if(crowded){rows.length=0;add('内容太长',12);add('请开启滚动',12);box=place();pitch=Math.min(preferred,height*.82/box.height,width*.88/box.width);}
+    // Integer display cells when possible keep edges crisp on old Android GPUs.
+    if(pitch>=2)pitch=Math.floor(pitch);
+    return {...box,rows,pitch,crowded};
+  }
+  function laugh(start,now){
+    const elapsed=start===null?2400:Math.max(0,now-start);
+    return {active:elapsed<2400,phase:Math.floor(elapsed/130)%4,elapsed};
+  }
+  // Original hand-drawn pixel interpretation, not a clip from the official show.
+  function drawNailong(ctx,width,height,animation,reducedMotion){
+    const sprite=document.createElement('canvas');sprite.width=112;sprite.height=108;
+    const p=sprite.getContext('2d'),active=animation.active;
+    const bounce=active&&!reducedMotion?[0,-2,1,-1][animation.phase]:0;
+    const yellow='#ffd43c',shade='#eda92d',cream='#fff0a0',ink='#563b28';
+    const rect=(x,y,w,h,color)=>{p.fillStyle=color;p.fillRect(x,y+bounce,w,h);};
+    function oval(cx,cy,rx,ry,color){for(let y=-ry;y<=ry;y++){const x=Math.floor(rx*Math.sqrt(Math.max(0,1-y*y/(ry*ry))));rect(cx-x,cy+y,x*2+1,1,color);}}
+    function blob(cx,cy,rx,ry,color){oval(cx,cy,rx+2,ry+2,ink);oval(cx,cy,rx,ry,color);}
+    // Tail, orange back plates, feet and a round cream belly.
+    rect(79,69,16,9,ink);rect(82,67,9,9,yellow);rect(91,64,7,9,yellow);
+    rect(79,42,9,8,'#f18a30');rect(83,55,9,8,'#f18a30');rect(83,68,8,7,'#f18a30');
+    blob(44,91,13,5,shade);blob(72,91,13,5,shade);
+    blob(57,69,25,24,yellow);oval(57,75,17,17,cream);
+    blob(30,65+(active?-4:2),7,12,yellow);blob(84,65+(active?-4:2),7,12,yellow);
+    // Oversized head, soft snout and tiny orange crest.
+    blob(55,37,33,25,yellow);rect(51,9,7,5,'#f18a30');rect(60,10,6,5,'#f18a30');
+    oval(44,45,23,14,yellow);rect(27,44,2,2,shade);rect(34,42,2,2,shade);
+    if(active){
+      // Closed happy eyes, open laughing mouth, teeth and tongue.
+      rect(36,30,4,2,ink);rect(33,32,3,3,ink);rect(40,32,3,3,ink);
+      rect(66,30,4,2,ink);rect(63,32,3,3,ink);rect(70,32,3,3,ink);
+      oval(52,48,17,!reducedMotion&&animation.phase%2?12:14,ink);
+      rect(39,38,26,4,'#fff7df');oval(53,56,10,4,'#f17d83');
+      rect(23,39,7,3,'#f2a039');rect(77,39,7,3,'#f2a039');
+      if(!reducedMotion){rect(10,24,3,8,cream);rect(7,27,9,2,cream);rect(96,34,3,7,cream);rect(93,37,9,2,cream);}
+    }else{
+      oval(38,30,3,5,ink);oval(67,30,3,5,ink);rect(38,27,2,2,'#fff');rect(67,27,2,2,'#fff');
+      rect(41,48,21,2,ink);rect(39,46,2,2,ink);rect(62,46,2,2,ink);
+    }
+    const scale=Math.max(1,Math.floor(Math.min(width*.7/112,(height-36)*.9/108)));
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(sprite,Math.round((width-112*scale)/2),Math.max(0,Math.round((height-108*scale-30)/2)),112*scale,108*scale);
+    ctx.fillStyle='#ffe48a';ctx.font='12px Pixel, monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
+    ctx.fillText(active?'哈哈哈哈！':'点一下 · 奶龙大笑',width/2,height-8);ctx.textAlign='start';
+  }
+  const api={layout,laugh,drawNailong};root.JianguoDisplay=api;
+  if(typeof module!=='undefined')module.exports=api;
+})(typeof globalThis!=='undefined'?globalThis:window);
 </script><script>(function(){
   'use strict';
-  const C=window.JianguoCore,$=id=>document.getElementById(id);
-  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE']};
+  const C=window.JianguoCore,D=window.JianguoDisplay,$=id=>document.getElementById(id);
+  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE'],nailong:['奶龙模式','NAILONG · SILENT']};
+  let laughStarted=null;
   let storageOK=true,phase='work',count=0,presenting=false,wake=null,audio=null;
   function read(k){try{return JSON.parse(localStorage.getItem(k));}catch(_){storageOK=false;return null;}}
   function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){storageOK=false;}}
@@ -576,6 +660,10 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
     $('modeLabel').textContent=labels[state.mode][1];$('charCount').textContent=Array.from(state.text).length+' / 600';
     $('colorLabel').textContent=state.color.toUpperCase();$('sizeLabel').textContent=state.size;$('speedLabel').textContent=state.speed;
     $('scrollOptions').hidden=!state.scroll;
+    const character=state.mode==='nailong';$('textAppearance').hidden=character;
+    $('display').setAttribute('role',character?'button':'img');
+    if(character){$('display').tabIndex=0;$('display').setAttribute('aria-label','奶龙待机，点击大笑（无声）');}
+    else $('display').removeAttribute('tabindex');
     document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('selected',b.dataset.color===state.color));
     const timing=state.mode==='timer'||state.mode==='pomodoro';$('timerActions').hidden=!timing;$('soundRow').hidden=!timing;
     const t=state.mode==='pomodoro'?pomo:timer;
@@ -595,7 +683,7 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
     updatePanels();invalidate();persist();
   }));
   ['minutes','work','rest'].forEach(id=>$(id).addEventListener('change',()=>{$(id).value=state[id];}));
-  $('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;state.mode=b.dataset.mode;updatePanels();invalidate();persist();});
+  $('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;state.mode=b.dataset.mode;laughStarted=null;updatePanels();invalidate();persist();});
   $('swatches').addEventListener('click',e=>{const b=e.target.closest('[data-color]');if(!b)return;state.color=b.dataset.color;$('color').value=state.color;updatePanels();invalidate();persist();});
   document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
     const p=b.dataset.preset;
@@ -617,9 +705,9 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
   setInterval(()=>{checkTimers();if(['clock','timer','pomodoro'].includes(state.mode))dirty=true;},250);
   // Pixel rendering uses one cached text raster; scrolling moves lit pixels only.
   const canvas=$('display'),ctx=canvas.getContext('2d'),raster=document.createElement('canvas'),rctx=raster.getContext('2d',{willReadFrequently:true});
-  let width=0,height=0,gridW=0,gridH=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false;
+  let width=0,height=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false,renderPitch=4;
   function invalidate(){dirty=true;cacheKey='';scrollOrigin=performance.now();}
-  function resize(){const rect=canvas.getBoundingClientRect();width=Math.max(1,Math.round(rect.width));height=Math.max(1,Math.round(rect.height));const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);pitch=Math.max(2.8,Math.min(6,width/170,height/75));gridW=Math.max(1,Math.floor(width/pitch));gridH=Math.max(1,Math.floor(height/pitch));const pattern=document.createElement('canvas');pattern.width=pattern.height=Math.round(pitch*dpr);const p=pattern.getContext('2d');p.fillStyle='#b5ce8620';const dot=Math.max(.6,pitch*dpr*.15);p.fillRect(0,0,dot,dot);bgPattern=ctx.createPattern(pattern,'repeat');dirty=true;cacheKey='';}
+  function resize(){const rect=canvas.getBoundingClientRect();width=Math.max(1,Math.round(rect.width));height=Math.max(1,Math.round(rect.height));const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);pitch=Math.max(2.8,Math.min(6,width/170,height/75));const pattern=document.createElement('canvas');pattern.width=pattern.height=Math.round(pitch*dpr);const p=pattern.getContext('2d');p.fillStyle='#b5ce8620';const dot=Math.max(.6,pitch*dpr*.15);p.fillRect(0,0,dot,dot);bgPattern=ctx.createPattern(pattern,'repeat');dirty=true;cacheKey='';}
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('screen'));else window.addEventListener('resize',resize);
   function content(){
     if(state.mode==='text')return state.text||' ';
@@ -630,35 +718,38 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
     return state.name+'\n'+state.role+(state.organization?'\n'+state.organization:'');
   }
   function makeRaster(text){
-    const key=[text,state.size,state.scroll,gridW,gridH,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
-    let lines=state.scroll?[text.replace(/\n/g,'   ')]:text.split('\n');
-    let fontSize=state.size;const family=fontReady?'Pixel':'monospace';
-    rctx.font=fontSize+'px '+family;
-    let maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));
-    if(!state.scroll){const safeW=gridW*.86,safeH=gridH*.72;const ratio=Math.min(1,safeW/maxWidth,safeH/(lines.length*fontSize*1.35));fontSize=Math.max(1,Math.floor(fontSize*ratio));}
-    else fontSize=Math.max(1,Math.min(fontSize,Math.floor(gridH*.65)));
-    rctx.font=fontSize+'px '+family;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));
-    if(!state.scroll&&maxWidth>gridW*.86){const wrapped=[];for(const line of lines){let row='';for(const char of Array.from(line)){if(row&&rctx.measureText(row+char).width>gridW*.86){wrapped.push(row);row='';}row+=char;}wrapped.push(row);}lines=wrapped;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));}
-    const crowded=!state.scroll&&(fontSize<6||lines.length*fontSize*1.4>gridH*.85);
-    $('displayHint').textContent=crowded?'内容较长，建议开启滚动或减少换行':'横放手机，效果更好';
-    if(!state.scroll&&lines.length*fontSize*1.4>gridH*.85){lines=['内容太长','请开启滚动'];fontSize=Math.max(1,Math.min(12,Math.floor(gridH*.25)));rctx.font=fontSize+'px '+family;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));}
-    rasterW=Math.min(30000,Math.ceil(maxWidth)+6);rasterH=Math.max(1,Math.ceil(lines.length*fontSize*1.4)+6);raster.width=rasterW;raster.height=rasterH;
-    rctx.font=fontSize+'px '+family;rctx.fillStyle='#fff';rctx.textBaseline='top';
-    lines.forEach((line,i)=>rctx.fillText(line,state.scroll?3:(rasterW-rctx.measureText(line).width)/2,3+i*fontSize*1.4));
+    const key=[text,state.mode,state.size,state.scroll,width,height,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
+    const family=fontReady?'Pixel':'monospace';
+    const measure=(s,size)=>{rctx.font=size+'px '+family;return rctx.measureText(s).width;};
+    const layout=D.layout(text,{width,height,size:state.size,mode:state.mode,scroll:state.scroll},measure);
+    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素字形 · 舒展字距与行距';
+    renderPitch=layout.pitch;rasterW=layout.width;rasterH=layout.height;raster.width=rasterW;raster.height=rasterH;
+    rctx.fillStyle='#fff';rctx.textBaseline='top';
+    for(const row of layout.rows){rctx.font=row.size+'px '+family;let x=state.scroll?4:(rasterW-row.width)/2;for(const char of Array.from(row.text)){rctx.fillText(char,Math.round(x),row.y);x+=rctx.measureText(char).width+row.spacing;}}
     const data=rctx.getImageData(0,0,rasterW,rasterH).data;points=[];
     for(let y=0;y<rasterH;y++)for(let x=0;x<rasterW;x++)if(data[(y*rasterW+x)*4+3]>100)points.push([x,y]);
     $('screenReader').textContent=text;canvas.setAttribute('aria-label',labels[state.mode][0]+'：'+text.replace(/\n/g,'，'));
   }
-  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!state.scroll)return;
-    const text=content();makeRaster(text);ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
+  function startLaugh(){if(state.mode!=='nailong')return;laughStarted=performance.now();dirty=true;}
+  $('laugh').addEventListener('click',startLaugh);
+  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!(state.mode==='nailong'?laughStarted!==null:state.scroll))return;
+    ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
     if(state.dots&&bgPattern){ctx.fillStyle=bgPattern;ctx.fillRect(0,0,width,height);}
-    const y0=(height-rasterH*pitch)/2;let x0=(width-rasterW*pitch)/2;
-    if(state.scroll){const cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*pitch:(offset-cycle)*pitch;
-      draw(x0,y0);draw(x0+cycle*pitch,y0);if(cycle<gridW)draw(x0+cycle*2*pitch,y0);
+    if(state.mode==='nailong'){
+      const animation=D.laugh(laughStarted,now);if(!animation.active)laughStarted=null;
+      D.drawNailong(ctx,width,height,animation,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      canvas.dataset.animation=animation.active?'laughing':'idle';canvas.setAttribute('aria-label',animation.active?'奶龙正在无声大笑，点击重播':'奶龙待机，点击大笑（无声）');
+      $('screenReader').textContent=canvas.getAttribute('aria-label');$('previewInfo').textContent='奶龙模式 · 无声 · 点击大笑';$('displayHint').textContent='点击角色即可大笑，笑完自动回到待机';dirty=false;return;
+    }
+    delete canvas.dataset.animation;
+    const text=content();makeRaster(text);
+    const y0=(height-rasterH*renderPitch)/2;let x0=(width-rasterW*renderPitch)/2;
+    if(state.scroll){const gridW=width/renderPitch,cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*renderPitch:(offset-cycle)*renderPitch;
+      draw(x0,y0);draw(x0+cycle*renderPitch,y0);if(cycle<gridW)draw(x0+cycle*2*renderPitch,y0);
     }else draw(x0,y0);
     $('previewInfo').textContent=state.scroll?'滚动显示 · '+state.speed+' 速度':'静态显示 · 自适应字号';dirty=false;
   }
-  function draw(x0,y0){ctx.fillStyle=state.color;const size=Math.max(1,pitch*.77);ctx.beginPath();for(const [x,y] of points){const px=x0+x*pitch,py=y0+y*pitch;if(px>=-pitch&&px<width&&py>=-pitch&&py<height)ctx.rect(Math.round(px),Math.round(py),size,size);}ctx.fill();}
+  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();}
   async function loadFont(){try{if(document.fonts){await document.fonts.load('12px Pixel');fontReady=document.fonts.check('12px Pixel');}}catch(_){}invalidate();if(!fontReady)toast('像素字体加载失败，已使用系统字体');}
   let presentHide;
   function showPresentBar(){if(!presenting)return;$('presentBar').classList.remove('dim');clearTimeout(presentHide);presentHide=setTimeout(()=>$('presentBar').classList.add('dim'),4000);}
@@ -668,7 +759,8 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
   $('exitPresent').addEventListener('click',exitPresent);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&presenting)exitPresent();});
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&presenting)exitPresent();});
-  canvas.addEventListener('pointerdown',()=>{showPresentBar();if(presenting&&!wake)getWake();});
+  canvas.addEventListener('click',()=>{startLaugh();showPresentBar();if(presenting&&!wake)getWake();});
+  canvas.addEventListener('keydown',e=>{if(state.mode==='nailong'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();startLaugh();}});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkTimers();invalidate();if(presenting)getWake();}});
   window.addEventListener('pagehide',persist);
   $('share').addEventListener('click',()=>{
@@ -683,7 +775,9 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
     if(location.protocol==='file:'){$('connection').textContent='单文件离线版 · 无需网络';$('offlineTitle').textContent='你正在使用完全离线版';$('offlineHelp').textContent='字体与程序均在此文件中。手机文件管理器需允许用浏览器打开 HTML；常亮和设置保存取决于浏览器支持。';return;}
     if(!('serviceWorker'in navigator)||!window.isSecureContext){$('offlineHelp').textContent='当前环境不支持离线缓存，请下载单文件离线版。线上版使用 HTTPS 可启用缓存。';return;}
     try{
-      await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+      const registration=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+      const updateNotice=()=>{if(registration.waiting&&navigator.serviceWorker.controller)toast('新版本已下载；请关闭此网站所有标签页后重新打开');};
+      updateNotice();registration.addEventListener('updatefound',()=>{const worker=registration.installing;if(worker)worker.addEventListener('statechange',updateNotice);});
       async function status(){try{const keys=await caches.keys();const key=keys.find(k=>k.startsWith('jianguo-pixel-v'));if(!key)return;const cache=await caches.open(key);const assets=await cache.keys();const paths=assets.map(r=>new URL(r.url).pathname);if(paths.some(p=>p.endsWith('/app.js'))&&paths.some(p=>p.endsWith('/pixel.woff2'))){$('connection').textContent=navigator.onLine?'已缓存 · 可断网使用':'离线运行 · 内容已保存在本机';$('offlineTitle').textContent='已准备好离线使用';$('offlineHelp').textContent='页面和中文像素字体已缓存。关闭网络后仍可打开此网址；也可下载单文件离线版。';}}
       catch(_){} }
       navigator.serviceWorker.addEventListener('message',status);await status();setTimeout(status,1000);

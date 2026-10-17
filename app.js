@@ -1,7 +1,8 @@
 (function(){
   'use strict';
-  const C=window.JianguoCore,$=id=>document.getElementById(id);
-  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE']};
+  const C=window.JianguoCore,D=window.JianguoDisplay,$=id=>document.getElementById(id);
+  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE'],nailong:['奶龙模式','NAILONG · SILENT']};
+  let laughStarted=null;
   let storageOK=true,phase='work',count=0,presenting=false,wake=null,audio=null;
   function read(k){try{return JSON.parse(localStorage.getItem(k));}catch(_){storageOK=false;return null;}}
   function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){storageOK=false;}}
@@ -29,6 +30,10 @@
     $('modeLabel').textContent=labels[state.mode][1];$('charCount').textContent=Array.from(state.text).length+' / 600';
     $('colorLabel').textContent=state.color.toUpperCase();$('sizeLabel').textContent=state.size;$('speedLabel').textContent=state.speed;
     $('scrollOptions').hidden=!state.scroll;
+    const character=state.mode==='nailong';$('textAppearance').hidden=character;
+    $('display').setAttribute('role',character?'button':'img');
+    if(character){$('display').tabIndex=0;$('display').setAttribute('aria-label','奶龙待机，点击大笑（无声）');}
+    else $('display').removeAttribute('tabindex');
     document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('selected',b.dataset.color===state.color));
     const timing=state.mode==='timer'||state.mode==='pomodoro';$('timerActions').hidden=!timing;$('soundRow').hidden=!timing;
     const t=state.mode==='pomodoro'?pomo:timer;
@@ -48,7 +53,7 @@
     updatePanels();invalidate();persist();
   }));
   ['minutes','work','rest'].forEach(id=>$(id).addEventListener('change',()=>{$(id).value=state[id];}));
-  $('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;state.mode=b.dataset.mode;updatePanels();invalidate();persist();});
+  $('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;state.mode=b.dataset.mode;laughStarted=null;updatePanels();invalidate();persist();});
   $('swatches').addEventListener('click',e=>{const b=e.target.closest('[data-color]');if(!b)return;state.color=b.dataset.color;$('color').value=state.color;updatePanels();invalidate();persist();});
   document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
     const p=b.dataset.preset;
@@ -70,9 +75,9 @@
   setInterval(()=>{checkTimers();if(['clock','timer','pomodoro'].includes(state.mode))dirty=true;},250);
   // Pixel rendering uses one cached text raster; scrolling moves lit pixels only.
   const canvas=$('display'),ctx=canvas.getContext('2d'),raster=document.createElement('canvas'),rctx=raster.getContext('2d',{willReadFrequently:true});
-  let width=0,height=0,gridW=0,gridH=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false;
+  let width=0,height=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false,renderPitch=4;
   function invalidate(){dirty=true;cacheKey='';scrollOrigin=performance.now();}
-  function resize(){const rect=canvas.getBoundingClientRect();width=Math.max(1,Math.round(rect.width));height=Math.max(1,Math.round(rect.height));const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);pitch=Math.max(2.8,Math.min(6,width/170,height/75));gridW=Math.max(1,Math.floor(width/pitch));gridH=Math.max(1,Math.floor(height/pitch));const pattern=document.createElement('canvas');pattern.width=pattern.height=Math.round(pitch*dpr);const p=pattern.getContext('2d');p.fillStyle='#b5ce8620';const dot=Math.max(.6,pitch*dpr*.15);p.fillRect(0,0,dot,dot);bgPattern=ctx.createPattern(pattern,'repeat');dirty=true;cacheKey='';}
+  function resize(){const rect=canvas.getBoundingClientRect();width=Math.max(1,Math.round(rect.width));height=Math.max(1,Math.round(rect.height));const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);pitch=Math.max(2.8,Math.min(6,width/170,height/75));const pattern=document.createElement('canvas');pattern.width=pattern.height=Math.round(pitch*dpr);const p=pattern.getContext('2d');p.fillStyle='#b5ce8620';const dot=Math.max(.6,pitch*dpr*.15);p.fillRect(0,0,dot,dot);bgPattern=ctx.createPattern(pattern,'repeat');dirty=true;cacheKey='';}
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('screen'));else window.addEventListener('resize',resize);
   function content(){
     if(state.mode==='text')return state.text||' ';
@@ -83,35 +88,38 @@
     return state.name+'\n'+state.role+(state.organization?'\n'+state.organization:'');
   }
   function makeRaster(text){
-    const key=[text,state.size,state.scroll,gridW,gridH,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
-    let lines=state.scroll?[text.replace(/\n/g,'   ')]:text.split('\n');
-    let fontSize=state.size;const family=fontReady?'Pixel':'monospace';
-    rctx.font=fontSize+'px '+family;
-    let maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));
-    if(!state.scroll){const safeW=gridW*.86,safeH=gridH*.72;const ratio=Math.min(1,safeW/maxWidth,safeH/(lines.length*fontSize*1.35));fontSize=Math.max(1,Math.floor(fontSize*ratio));}
-    else fontSize=Math.max(1,Math.min(fontSize,Math.floor(gridH*.65)));
-    rctx.font=fontSize+'px '+family;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));
-    if(!state.scroll&&maxWidth>gridW*.86){const wrapped=[];for(const line of lines){let row='';for(const char of Array.from(line)){if(row&&rctx.measureText(row+char).width>gridW*.86){wrapped.push(row);row='';}row+=char;}wrapped.push(row);}lines=wrapped;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));}
-    const crowded=!state.scroll&&(fontSize<6||lines.length*fontSize*1.4>gridH*.85);
-    $('displayHint').textContent=crowded?'内容较长，建议开启滚动或减少换行':'横放手机，效果更好';
-    if(!state.scroll&&lines.length*fontSize*1.4>gridH*.85){lines=['内容太长','请开启滚动'];fontSize=Math.max(1,Math.min(12,Math.floor(gridH*.25)));rctx.font=fontSize+'px '+family;maxWidth=Math.max(1,...lines.map(l=>rctx.measureText(l).width));}
-    rasterW=Math.min(30000,Math.ceil(maxWidth)+6);rasterH=Math.max(1,Math.ceil(lines.length*fontSize*1.4)+6);raster.width=rasterW;raster.height=rasterH;
-    rctx.font=fontSize+'px '+family;rctx.fillStyle='#fff';rctx.textBaseline='top';
-    lines.forEach((line,i)=>rctx.fillText(line,state.scroll?3:(rasterW-rctx.measureText(line).width)/2,3+i*fontSize*1.4));
+    const key=[text,state.mode,state.size,state.scroll,width,height,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
+    const family=fontReady?'Pixel':'monospace';
+    const measure=(s,size)=>{rctx.font=size+'px '+family;return rctx.measureText(s).width;};
+    const layout=D.layout(text,{width,height,size:state.size,mode:state.mode,scroll:state.scroll},measure);
+    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素字形 · 舒展字距与行距';
+    renderPitch=layout.pitch;rasterW=layout.width;rasterH=layout.height;raster.width=rasterW;raster.height=rasterH;
+    rctx.fillStyle='#fff';rctx.textBaseline='top';
+    for(const row of layout.rows){rctx.font=row.size+'px '+family;let x=state.scroll?4:(rasterW-row.width)/2;for(const char of Array.from(row.text)){rctx.fillText(char,Math.round(x),row.y);x+=rctx.measureText(char).width+row.spacing;}}
     const data=rctx.getImageData(0,0,rasterW,rasterH).data;points=[];
     for(let y=0;y<rasterH;y++)for(let x=0;x<rasterW;x++)if(data[(y*rasterW+x)*4+3]>100)points.push([x,y]);
     $('screenReader').textContent=text;canvas.setAttribute('aria-label',labels[state.mode][0]+'：'+text.replace(/\n/g,'，'));
   }
-  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!state.scroll)return;
-    const text=content();makeRaster(text);ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
+  function startLaugh(){if(state.mode!=='nailong')return;laughStarted=performance.now();dirty=true;}
+  $('laugh').addEventListener('click',startLaugh);
+  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!(state.mode==='nailong'?laughStarted!==null:state.scroll))return;
+    ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
     if(state.dots&&bgPattern){ctx.fillStyle=bgPattern;ctx.fillRect(0,0,width,height);}
-    const y0=(height-rasterH*pitch)/2;let x0=(width-rasterW*pitch)/2;
-    if(state.scroll){const cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*pitch:(offset-cycle)*pitch;
-      draw(x0,y0);draw(x0+cycle*pitch,y0);if(cycle<gridW)draw(x0+cycle*2*pitch,y0);
+    if(state.mode==='nailong'){
+      const animation=D.laugh(laughStarted,now);if(!animation.active)laughStarted=null;
+      D.drawNailong(ctx,width,height,animation,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      canvas.dataset.animation=animation.active?'laughing':'idle';canvas.setAttribute('aria-label',animation.active?'奶龙正在无声大笑，点击重播':'奶龙待机，点击大笑（无声）');
+      $('screenReader').textContent=canvas.getAttribute('aria-label');$('previewInfo').textContent='奶龙模式 · 无声 · 点击大笑';$('displayHint').textContent='点击角色即可大笑，笑完自动回到待机';dirty=false;return;
+    }
+    delete canvas.dataset.animation;
+    const text=content();makeRaster(text);
+    const y0=(height-rasterH*renderPitch)/2;let x0=(width-rasterW*renderPitch)/2;
+    if(state.scroll){const gridW=width/renderPitch,cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*renderPitch:(offset-cycle)*renderPitch;
+      draw(x0,y0);draw(x0+cycle*renderPitch,y0);if(cycle<gridW)draw(x0+cycle*2*renderPitch,y0);
     }else draw(x0,y0);
     $('previewInfo').textContent=state.scroll?'滚动显示 · '+state.speed+' 速度':'静态显示 · 自适应字号';dirty=false;
   }
-  function draw(x0,y0){ctx.fillStyle=state.color;const size=Math.max(1,pitch*.77);ctx.beginPath();for(const [x,y] of points){const px=x0+x*pitch,py=y0+y*pitch;if(px>=-pitch&&px<width&&py>=-pitch&&py<height)ctx.rect(Math.round(px),Math.round(py),size,size);}ctx.fill();}
+  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();}
   async function loadFont(){try{if(document.fonts){await document.fonts.load('12px Pixel');fontReady=document.fonts.check('12px Pixel');}}catch(_){}invalidate();if(!fontReady)toast('像素字体加载失败，已使用系统字体');}
   let presentHide;
   function showPresentBar(){if(!presenting)return;$('presentBar').classList.remove('dim');clearTimeout(presentHide);presentHide=setTimeout(()=>$('presentBar').classList.add('dim'),4000);}
@@ -121,7 +129,8 @@
   $('exitPresent').addEventListener('click',exitPresent);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&presenting)exitPresent();});
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&presenting)exitPresent();});
-  canvas.addEventListener('pointerdown',()=>{showPresentBar();if(presenting&&!wake)getWake();});
+  canvas.addEventListener('click',()=>{startLaugh();showPresentBar();if(presenting&&!wake)getWake();});
+  canvas.addEventListener('keydown',e=>{if(state.mode==='nailong'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();startLaugh();}});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkTimers();invalidate();if(presenting)getWake();}});
   window.addEventListener('pagehide',persist);
   $('share').addEventListener('click',()=>{
@@ -136,7 +145,9 @@
     if(location.protocol==='file:'){$('connection').textContent='单文件离线版 · 无需网络';$('offlineTitle').textContent='你正在使用完全离线版';$('offlineHelp').textContent='字体与程序均在此文件中。手机文件管理器需允许用浏览器打开 HTML；常亮和设置保存取决于浏览器支持。';return;}
     if(!('serviceWorker'in navigator)||!window.isSecureContext){$('offlineHelp').textContent='当前环境不支持离线缓存，请下载单文件离线版。线上版使用 HTTPS 可启用缓存。';return;}
     try{
-      await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+      const registration=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+      const updateNotice=()=>{if(registration.waiting&&navigator.serviceWorker.controller)toast('新版本已下载；请关闭此网站所有标签页后重新打开');};
+      updateNotice();registration.addEventListener('updatefound',()=>{const worker=registration.installing;if(worker)worker.addEventListener('statechange',updateNotice);});
       async function status(){try{const keys=await caches.keys();const key=keys.find(k=>k.startsWith('jianguo-pixel-v'));if(!key)return;const cache=await caches.open(key);const assets=await cache.keys();const paths=assets.map(r=>new URL(r.url).pathname);if(paths.some(p=>p.endsWith('/app.js'))&&paths.some(p=>p.endsWith('/pixel.woff2'))){$('connection').textContent=navigator.onLine?'已缓存 · 可断网使用':'离线运行 · 内容已保存在本机';$('offlineTitle').textContent='已准备好离线使用';$('offlineHelp').textContent='页面和中文像素字体已缓存。关闭网络后仍可打开此网址；也可下载单文件离线版。';}}
       catch(_){} }
       navigator.serviceWorker.addEventListener('message',status);await status();setTimeout(status,1000);
