@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  const C=window.JianguoCore,D=window.JianguoDisplay,$=id=>document.getElementById(id);
-  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE'],nailong:['奶龙模式','NAILONG · SILENT']};
+  const C=window.JianguoCore,D=window.JianguoDisplay,E=window.JianguoEmoji,$=id=>document.getElementById(id);
+  const labels={text:['像素文字','TEXT MODE'],clock:['像素时钟','CLOCK MODE'],timer:['倒计时','COUNTDOWN'],pomodoro:['番茄钟','POMODORO'],status:['工作状态','STATUS MODE'],badge:['电子工牌','ID BADGE'],nailong:['奶龙模式','NAILONG · SILENT'],business:['营业状态','BUSINESS STATUS']};
   let laughStarted=null;
   let storageOK=true,phase='work',count=0,presenting=false,audio=null;
   function read(k){try{return JSON.parse(localStorage.getItem(k));}catch(_){storageOK=false;return null;}}
@@ -17,7 +17,14 @@
   let toastID;
   function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastID);toastID=setTimeout(()=>$('toast').classList.remove('show'),4200);}
   function persist(){write('jianguo.state.v1',state);write('jianguo.timers.v1',{timer,pomo,phase,count});}
-  const fieldIDs=['text','color','size','speed','scroll','direction','dots','minutes','work','rest','name','role','organization','status','note','sound'];
+  const fieldIDs=['text','color','size','speed','scroll','direction','dots','minutes','work','rest','name','role','organization','status','note','sound','businessLang','businessNote','businessEmoji'];
+  const isScrolling=()=>state.mode==='business'?state.businessScroll:state.scroll;
+  function icon(value){const img=document.createElement('img'),token=E.tokenize(value).find(t=>t.type==='emoji');img.alt='';img.width=img.height=24;if(token)img.src=E.dataURL(token.key);return img;}
+  C.businessPresets.forEach(p=>{const b=document.createElement('button');b.type='button';b.dataset.business=p.id;b.append(icon(p.emoji));const label=document.createElement('span'),zh=document.createElement('strong'),en=document.createElement('small');zh.textContent=p.zh;en.textContent=p.en;label.append(zh,en);b.append(label);$('businessPresets').append(b);});
+  $('businessPresets').addEventListener('click',e=>{const b=e.target.closest('[data-business]');if(!b)return;state.businessState=b.dataset.business;updatePanels();invalidate();persist();});
+  const emojiOptions=[['🙂','微笑'],['😂','大笑'],['🥰','开心'],['😴','睡觉'],['🤔','思考'],['😎','酷'],['👍','赞'],['👋','挥手'],['❤️','爱心'],['✨','闪亮'],['🔥','火'],['☕','咖啡'],['📚','书本'],['💻','电脑'],['🍅','番茄'],['🎉','庆祝'],['🟢','绿灯'],['🔴','红灯'],['🌙','月亮'],['⏸️','暂停']];
+  emojiOptions.forEach(([value,label])=>{const b=document.createElement('button');b.type='button';b.dataset.emoji=value;b.title=label;b.setAttribute('aria-label','插入'+label);b.append(icon(value));$('emojiPicker').append(b);});
+  $('emojiPicker').addEventListener('click',e=>{const b=e.target.closest('[data-emoji]');if(!b)return;const input=$('text'),start=input.selectionStart,end=input.selectionEnd;input.value=input.value.slice(0,start)+b.dataset.emoji+input.value.slice(end);input.dispatchEvent(new Event('input',{bubbles:true}));input.value=state.text;input.focus();input.setSelectionRange(Math.min(input.value.length,start+b.dataset.emoji.length),Math.min(input.value.length,start+b.dataset.emoji.length));});
   function paintControls(){
     fieldIDs.forEach(id=>{const el=$(id);if(el.type==='checkbox')el.checked=state[id];else el.value=state[id];});
     // Imported custom statuses remain editable, even when absent from presets.
@@ -29,7 +36,8 @@
     document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==state.mode);
     $('modeLabel').textContent=labels[state.mode][1];$('charCount').textContent=Array.from(state.text).length+' / 600';
     $('colorLabel').textContent=state.color.toUpperCase();$('sizeLabel').textContent=state.size;$('speedLabel').textContent=state.speed;
-    $('scrollOptions').hidden=!state.scroll;
+    $('scroll').checked=isScrolling();$('scrollOptions').hidden=!isScrolling();
+    document.querySelectorAll('[data-business]').forEach(b=>{const active=b.dataset.business===state.businessState;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});
     const character=state.mode==='nailong';$('textAppearance').hidden=character;
     $('display').setAttribute('role',character?'button':'img');
     if(character){$('display').tabIndex=0;$('display').setAttribute('aria-label','奶龙待机，点击大笑（无声）');}
@@ -46,7 +54,7 @@
     const el=$(id),value=el.type==='checkbox'?el.checked:el.type==='range'||el.type==='number'?Number(el.value):el.value;
     // Allow temporarily empty numeric input while typing; normalize on blur.
     if(el.type==='number'&&el.value==='')return;
-    state=C.normalize({...state,[id]:value});
+    state=C.normalize({...state,[id==='scroll'&&state.mode==='business'?'businessScroll':id]:value});
     if(id==='minutes')timer=C.newTimer(state.minutes*60000);
     if(id==='work'||id==='rest'){pomo=C.newTimer(state[phase]*60000);}
     if(id==='sound'&&state.sound)unlockAudio();
@@ -75,7 +83,8 @@
   setInterval(()=>{checkTimers();if(['clock','timer','pomodoro'].includes(state.mode))dirty=true;},250);
   // Pixel rendering uses one cached text raster; scrolling moves lit pixels only.
   const canvas=$('display'),ctx=canvas.getContext('2d'),raster=document.createElement('canvas'),rctx=raster.getContext('2d',{willReadFrequently:true}),characterImage=$('nailongSprite');
-  let width=0,height=0,pitch=4,dirty=true,cacheKey='',points=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false,renderPitch=4;
+  let width=0,height=0,pitch=4,dirty=true,cacheKey='',points=[],emojiPoints=[],rasterW=0,rasterH=0,bgPattern=null,scrollOrigin=performance.now(),lastFrame=0,fontReady=false,renderPitch=4;
+  const drawEmoji=E.createPainter(()=>{dirty=true;},()=>toast('表情素材加载失败，请重新加载或下载新版离线版'));
   function invalidate(){dirty=true;cacheKey='';scrollOrigin=performance.now();}
   function characterReady(){return characterImage.complete&&characterImage.naturalWidth===1536&&characterImage.naturalHeight===2288;}
   characterImage.addEventListener('load',()=>{invalidate();if(!characterReady())toast('奶龙素材尺寸不正确，请重新下载离线版或联网更新');});
@@ -88,24 +97,26 @@
     if(state.mode==='timer')return timer.status==='done'?'时间到\n休息一下吧':C.formatTime(C.remaining(timer,Date.now()));
     if(state.mode==='pomodoro')return (pomo.status==='done'?'阶段完成':phase==='work'?'专注时间':'休息时间')+'\n'+C.formatTime(C.remaining(pomo,Date.now()));
     if(state.mode==='status')return state.status+(state.note?'\n'+state.note:'');
+    if(state.mode==='business')return C.businessText(state);
     return state.name+'\n'+state.role+(state.organization?'\n'+state.organization:'');
   }
   function makeRaster(text){
-    const key=[text,state.mode,state.size,state.scroll,width,height,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
+    const scroll=isScrolling(),key=[text,state.mode,state.size,scroll,width,height,fontReady].join('|');if(key===cacheKey)return;cacheKey=key;
     const family=fontReady?'Pixel':'monospace';
-    const measure=(s,size)=>{rctx.font=size+'px '+family;return rctx.measureText(s).width;};
-    const layout=D.layout(text,{width,height,size:state.size,mode:state.mode,scroll:state.scroll},measure);
-    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素字形 · 舒展字距与行距';
+    const measure=(s,size)=>{rctx.font=size+'px '+family;return E.tokenize(s).reduce((n,t)=>n+(t.type==='emoji'?size:rctx.measureText(t.value).width),0);};
+    const layout=D.layout(text,{width,height,size:state.size,mode:state.mode,scroll,units:s=>E.tokenize(s).map(t=>t.value)},measure);
+    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素文字 · 彩色离线表情';
     renderPitch=layout.pitch;rasterW=layout.width;rasterH=layout.height;raster.width=rasterW;raster.height=rasterH;
     rctx.fillStyle='#fff';rctx.textBaseline='top';
-    for(const row of layout.rows){rctx.font=row.size+'px '+family;let x=state.scroll?4:(rasterW-row.width)/2;for(const char of Array.from(row.text)){rctx.fillText(char,Math.round(x),row.y);x+=rctx.measureText(char).width+row.spacing;}}
+    emojiPoints=[];
+    for(const row of layout.rows){rctx.font=row.size+'px '+family;let x=scroll?4:(rasterW-row.width)/2;for(const token of E.tokenize(row.text)){if(token.type==='emoji'){emojiPoints.push({key:token.key,x,y:row.y,size:row.size});x+=row.size+row.spacing;}else{rctx.fillText(token.value,Math.round(x),row.y);x+=rctx.measureText(token.value).width+row.spacing;}}}
     const data=rctx.getImageData(0,0,rasterW,rasterH).data;points=[];
     for(let y=0;y<rasterH;y++)for(let x=0;x<rasterW;x++)if(data[(y*rasterW+x)*4+3]>100)points.push([x,y]);
     $('screenReader').textContent=text;canvas.setAttribute('aria-label',labels[state.mode][0]+'：'+text.replace(/\n/g,'，'));
   }
   function startLaugh(){if(state.mode!=='nailong')return;if(!characterReady()){toast('奶龙素材尚未加载成功，请稍候或重新加载页面');return;}laughStarted=performance.now();dirty=true;}
   $('laugh').addEventListener('click',startLaugh);
-  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!(state.mode==='nailong'?laughStarted!==null:state.scroll))return;
+  function frame(now){requestAnimationFrame(frame);if(document.hidden||now-lastFrame<48)return;lastFrame=now;if(!dirty&&!(state.mode==='nailong'?laughStarted!==null:isScrolling()))return;
     ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height);
     if(state.dots&&bgPattern){ctx.fillStyle=bgPattern;ctx.fillRect(0,0,width,height);}
     if(state.mode==='nailong'){
@@ -117,12 +128,12 @@
     delete canvas.dataset.animation;
     const text=content();makeRaster(text);
     const y0=(height-rasterH*renderPitch)/2;let x0=(width-rasterW*renderPitch)/2;
-    if(state.scroll){const gridW=width/renderPitch,cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*renderPitch:(offset-cycle)*renderPitch;
+    if(isScrolling()){const gridW=width/renderPitch,cycle=rasterW+Math.max(20,gridW*.35),offset=((now-scrollOrigin)/1000*state.speed/3)%cycle;x0=state.direction==='left'?-offset*renderPitch:(offset-cycle)*renderPitch;
       draw(x0,y0);draw(x0+cycle*renderPitch,y0);if(cycle<gridW)draw(x0+cycle*2*renderPitch,y0);
     }else draw(x0,y0);
-    $('previewInfo').textContent=state.scroll?'滚动显示 · '+state.speed+' 速度':'静态显示 · 自适应字号';dirty=false;
+    $('previewInfo').textContent=isScrolling()?'滚动显示 · '+state.speed+' 速度':'静态显示 · 自适应字号';dirty=false;
   }
-  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();}
+  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();for(const p of emojiPoints){const x=x0+p.x*renderPitch,y=y0+p.y*renderPitch,s=p.size*renderPitch;if(x+s>=0&&x<width)drawEmoji(ctx,p.key,x,y,s);}}
   async function loadFont(){try{if(document.fonts){await document.fonts.load('12px Pixel');fontReady=document.fonts.check('12px Pixel');}}catch(_){}invalidate();if(!fontReady)toast('像素字体加载失败，已使用系统字体');}
   let presentHide;
   let keepAwakeMode=read('jianguo.wake.v1');if(!['auto','compat','off'].includes(keepAwakeMode))keepAwakeMode='auto';

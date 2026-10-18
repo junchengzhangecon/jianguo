@@ -7,10 +7,11 @@
     const base=Math.max(12,Math.floor(size/12)*12),padding=4;
     const limit=Math.max(24,Math.floor(width*.86/1.25));
     const rows=[];
+    const units=options.units||Array.from;
     function add(line,font){
       const spacing=Math.max(1,font/12);
-      const chars=Array.from(line);
-      const rowWidth=s=>Math.max(1,measure(s,font)+Math.max(0,Array.from(s).length-1)*spacing);
+      const chars=units(line);
+      const rowWidth=s=>Math.max(1,measure(s,font)+Math.max(0,units(s).length-1)*spacing);
       if(scroll){rows.push({text:line,size:font,spacing,width:rowWidth(line)});return;}
       let part='';
       for(const char of chars){

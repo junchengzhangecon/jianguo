@@ -1,19 +1,33 @@
 (function (root) {
   'use strict';
-  const defaults = {mode:'text',text:'认真工作\n好好生活',color:'#b8f56b',background:'#10130f',size:24,speed:35,scroll:false,direction:'left',dots:true,minutes:5,work:25,rest:5,name:'Juncheng Zhang',role:'RESEARCHER',organization:'保持好奇 · 持续探索',status:'专注中',note:'请稍后再来',sound:false};
+  const businessPresets=[
+    {id:'open',emoji:'🟢',zh:'欢迎交流',en:'Open to Chat'},
+    {id:'focus',emoji:'📚',zh:'专注工作',en:'Deep Work'},
+    {id:'busy',emoji:'🔴',zh:'请勿打扰',en:'Do Not Disturb'},
+    {id:'break',emoji:'☕',zh:'休息一下',en:'On Break'},
+    {id:'back',emoji:'👋',zh:'马上回来',en:'Be Right Back'},
+    {id:'closed',emoji:'🌙',zh:'今日打烊',en:'Closed for Today'},
+    {id:'paused',emoji:'⏸️',zh:'暂停服务',en:'Out of Service'}
+  ];
+  const defaults = {mode:'text',text:'认真工作\n好好生活',color:'#b8f56b',background:'#10130f',size:24,speed:35,scroll:false,direction:'left',dots:true,minutes:5,work:25,rest:5,name:'Juncheng Zhang',role:'RESEARCHER',organization:'保持好奇 · 持续探索',status:'专注中',note:'请稍后再来',sound:false,businessState:'open',businessLang:'both',businessNote:'',businessEmoji:true,businessScroll:true};
   const num=(v,d,min,max)=>Math.min(max,Math.max(min,Number.isFinite(Number(v))?Number(v):d));
   const text=(v,d,max)=>typeof v==='string'?Array.from(v).slice(0,max).join(''):d;
   function normalize(value){
     const s=value&&typeof value==='object'?value:{};const d=defaults;
-    return {...d,mode:['text','clock','timer','pomodoro','status','badge','nailong'].includes(s.mode)?s.mode:d.mode,
+    return {...d,mode:['text','clock','timer','pomodoro','status','badge','nailong','business'].includes(s.mode)?s.mode:d.mode,
       text:text(s.text,d.text,600), color:/^#[\da-f]{6}$/i.test(s.color)?s.color:d.color,
       background:/^#[\da-f]{6}$/i.test(s.background)?s.background:d.background,
       size:num(s.size,d.size,12,48),speed:num(s.speed,d.speed,5,100),scroll:typeof s.scroll==='boolean'?s.scroll:d.scroll,
       direction:s.direction==='right'?'right':'left',dots:typeof s.dots==='boolean'?s.dots:d.dots,
       minutes:num(s.minutes,d.minutes,1,180),work:num(s.work,d.work,1,120),rest:num(s.rest,d.rest,1,60),
       name:text(s.name,d.name,30),role:text(s.role,d.role,50),organization:text(s.organization,d.organization,80),
-      status:text(s.status,d.status,30),note:text(s.note,d.note,100),sound:typeof s.sound==='boolean'?s.sound:false};
+      status:text(s.status,d.status,30),note:text(s.note,d.note,100),sound:typeof s.sound==='boolean'?s.sound:false,
+      businessState:businessPresets.some(p=>p.id===s.businessState)?s.businessState:d.businessState,
+      businessLang:['both','zh','en'].includes(s.businessLang)?s.businessLang:d.businessLang,
+      businessNote:text(s.businessNote,'',80),businessEmoji:typeof s.businessEmoji==='boolean'?s.businessEmoji:true,
+      businessScroll:typeof s.businessScroll==='boolean'?s.businessScroll:true};
   }
+  function businessText(s){const p=businessPresets.find(p=>p.id===s.businessState)||businessPresets[0];return (s.businessEmoji?p.emoji+' ':'')+(s.businessLang==='zh'?p.zh:s.businessLang==='en'?p.en:p.zh+' · '+p.en)+(s.businessNote?'\n'+s.businessNote:'');}
   function encode(s){return encodeURIComponent(JSON.stringify(normalize(s)));}
   function decode(s){try{return normalize(JSON.parse(decodeURIComponent(s)));}catch(_){return null;}}
   function newTimer(duration){return {duration:Math.max(0,Number(duration)||0),left:Math.max(0,Number(duration)||0),end:null,status:'idle'};}
@@ -26,6 +40,6 @@
     return {duration:t.duration,left:t.left,end:t.status==='running'?t.end:null,status:t.status};
   }
   function formatTime(ms){const s=Math.ceil(Math.max(0,Number(ms)||0)/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
-  const api={defaults,normalize,encode,decode,newTimer,remaining,start,pause,tick,restoreTimer,formatTime,nextPhase:p=>p==='work'?'rest':'work'};
+  const api={defaults,businessPresets,businessText,normalize,encode,decode,newTimer,remaining,start,pause,tick,restoreTimer,formatTime,nextPhase:p=>p==='work'?'rest':'work'};
   root.JianguoCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);

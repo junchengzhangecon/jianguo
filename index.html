@@ -20,8 +20,9 @@
       <button data-mode="status" class="nav-item"><span>▰</span>工作状态<small>05</small></button>
       <button data-mode="badge" class="nav-item"><span>▣</span>电子工牌<small>06</small></button>
       <button data-mode="nailong" class="nav-item"><span>☺</span>奶龙模式<small>07</small></button>
+      <button data-mode="business" class="nav-item"><span>◈</span>营业状态<small>08</small></button>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.2.0</div></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.3.0</div></div>
   </aside>
   <main>
     <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
@@ -49,7 +50,14 @@
         </section>
         <aside class="settings"><div class="settings-heading"><h2>让它成为你的</h2><span>✳</span></div>
           <div class="settings-content">
-            <section data-panel="text"><label for="text">显示文字 <span id="charCount">9 / 600</span></label><textarea id="text" maxlength="1200" rows="4" placeholder="写下想展示的内容…"></textarea><p class="field-help">支持中文、英文和换行</p></section>
+            <section data-panel="text"><label for="text">显示文字 <span id="charCount">9 / 600</span></label><textarea id="text" maxlength="1200" rows="4" placeholder="写下想展示的内容…"></textarea><div id="emojiPicker" class="emoji-picker" aria-label="插入常用表情"></div><p class="field-help">支持中文、英文、换行与彩色表情；也可直接粘贴 emoji。</p></section>
+            <section data-panel="business" hidden>
+              <label>此刻的状态</label><div id="businessPresets" class="business-presets" aria-label="营业状态预设"></div>
+              <label for="businessLang">显示语言</label><select id="businessLang"><option value="both">中文 + English</option><option value="zh">仅中文</option><option value="en">English only</option></select>
+              <label for="businessNote">补充一句（可选）</label><input id="businessNote" maxlength="80" placeholder="例如：14:30 回来 / 欢迎来聊聊">
+              <div class="toggle-row"><div><label for="businessEmoji">显示状态表情</label><p>彩色内置图标 · 断网也能显示</p></div><input id="businessEmoji" class="toggle" type="checkbox" role="switch"></div>
+              <p class="field-help">默认循环滚动，也可在下方关闭；不会改变像素文字模式的滚动开关。</p>
+            </section>
             <section data-panel="clock" hidden><div class="info-box">显示设备本地时间与日期。<br>离线可用，时间以手机系统时钟为准。</div></section>
             <section data-panel="timer" hidden><label for="minutes">倒计时分钟数</label><input id="minutes" type="number" min="1" max="180"><p class="field-help">1—180 分钟，修改时会重置此倒计时</p></section>
             <section data-panel="pomodoro" hidden><div class="two-fields"><div><label for="work">专注 / 分钟</label><input id="work" type="number" min="1" max="120"></div><div><label for="rest">休息 / 分钟</label><input id="rest" type="number" min="1" max="60"></div></div><p class="field-help">阶段结束后，手动开始下一阶段</p></section>
@@ -69,6 +77,7 @@
         </aside>
       </div>
       <footer>小屏幕，大有可为。<span>JIANGUO PIXEL STUDIO <span class="footer-leaf">✳</span> MADE FOR YOUR DESK</span></footer>
+      <p class="emoji-credit">表情图形：<a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener noreferrer">Twemoji</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> · Twitter, Inc. and other contributors / jdecked</p>
     </section>
   </main>
 </div>
@@ -77,5 +86,5 @@
 <dialog id="shareDialog"><h2>把显示内容带到手机</h2><p>复制链接发给手机，打开即可导入当前配置。它不会实时同步后续修改。</p><textarea id="shareUrl" rows="4" readonly aria-label="配置分享链接"></textarea><p>链接包含你填写的文字，请只分享给需要的人。</p><button id="copyLink" class="primary">复制链接</button><button id="closeShare" class="secondary">关闭</button></dialog>
 <img id="nailongSprite" src="assets/naiwa.webp" hidden alt="" aria-hidden="true">
 <div id="wakeMedia" hidden data-webm="assets/wake.webm" data-mp4="assets/wake.mp4"></div>
-<script src="core.js"></script><script src="display.js"></script><script src="wake.js"></script><script src="app.js"></script>
+<script src="core.js"></script><script src="emoji-data.js"></script><script src="emoji.js"></script><script src="display.js"></script><script src="wake.js"></script><script src="app.js"></script>
 </body></html>

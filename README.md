@@ -1,6 +1,26 @@
 # 坚果像素屏 · Jianguo Pixel Studio
 
-把旧安卓手机变成像素信息屏。中文编辑、黑底点阵、可开关的滚动字幕、时钟、倒计时、番茄钟、工作状态、电子工牌和无声奶龙。横放展示优先，横竖屏均自适应；Mac 也能编辑预览。
+把旧安卓手机变成像素信息屏。中文编辑、黑底点阵、彩色表情、可开关的滚动字幕、时钟、倒计时、番茄钟、工作状态、营业状态、电子工牌和无声奶龙。横放展示优先，横竖屏均自适应；Mac 也能编辑预览。
+
+## v1.3.0 更新：营业状态 / 离线彩色表情
+
+新增「营业状态」，点选即显示，默认循环滚动：
+
+| 表情 | 中文 | English |
+| --- | --- | --- |
+| 🟢 | 欢迎交流 | Open to Chat |
+| 📚 | 专注工作 | Deep Work |
+| 🔴 | 请勿打扰 | Do Not Disturb |
+| ☕ | 休息一下 | On Break |
+| 👋 | 马上回来 | Be Right Back |
+| 🌙 | 今日打烊 | Closed for Today |
+| ⏸️ | 暂停服务 | Out of Service |
+
+可切换中英双语、仅中文或仅英文，添加一句备注、关闭状态表情。滚动开关单独保存，不会改变原文字模式的滚动选择；速度和方向仍使用通用设置。关闭滚动后自动换行、居中适配。
+
+普通文字模式新增表情快捷插入，也支持直接粘贴表情。使用内置 Twemoji 17.0.3 的 4,009 个 SVG 图形，独立于手机系统的 emoji 字体，保留彩色并与文字同步移动；支持库内的肤色、国旗、职业及家庭等组合表情。超出此版本素材库的字符仍可能依赖系统字体。
+
+网页版和单文件版均包含完整表情库，不调用 CDN。为保证离线使用，首次下载体积有所增加（单文件约 14 MB），请等“已准备好离线使用”再断网。图形授权为 CC-BY-4.0，非本项目代码的 MIT，许可与来源见 LICENSES/Twemoji-*。
 
 ## v1.2.0 更新：防息屏 / 保持唤醒
 
@@ -31,7 +51,7 @@
 - 新增“奶龙模式”：点击角色或“大笑”按钮，无声大笑约 2.4 秒，之后回到待机，可再次点击。支持 Enter / 空格与减少动态效果设置，不调用外部视频、音频或 CDN。
 - 角色为手绘像素演绎，并非官方动画或官方授权素材；角色相关权利归原权利人，项目 MIT 仅适用于原创程序代码。
 
-旧版网页如果没有出现“防息屏 / 保持唤醒”面板或仍显示旧手绘角色：联网打开页面，稍等缓存下载，然后关闭该网站**所有标签页和主屏幕窗口**，再重新打开。不要清除站点数据，以免丢失设置。旧的单文件 HTML 不会自动更新，需要重新下载 v1.2.0。
+旧版网页如果没有出现“营业状态”或表情按钮：联网打开页面，稍等缓存下载，然后关闭该网站**所有标签页和主屏幕窗口**，再重新打开。不要清除站点数据，以免丢失设置。旧的单文件 HTML 不会自动更新，需要重新下载 v1.3.0。
 
 ## 手机怎么用
 
@@ -45,7 +65,7 @@
 
 不同安卓文件管理器的 HTML 打开方式不同：如果出现源码文本、禁止打开、或文件管理器预览不执行脚本，请改用“打开方式 → 浏览器”；若手机不允许这种方式，改用上面的已缓存网页版。主屏幕安装入口、全屏和自动常亮在 `file://` 下可能不可用。
 
-单文件版字体采用 OFL-1.1；分发时请一并保留 `LICENSES/`（离线压缩包已包含）。
+单文件版字体采用 OFL-1.1，表情图形采用 CC-BY-4.0；完整许可已嵌入 HTML，分发压缩包时也请保留 `LICENSES/`。
 
 ## 展示与设置
 
@@ -75,7 +95,7 @@ npm start
 
 更新需要递增 `sw.js` 的缓存版本。新版本在旧页面关闭后激活，重新打开时使用新资源。
 
-浏览器回归测试（需可用的 Playwright 与 Chrome）位于 `tests/browser.cjs`、`tests/regressions.cjs`、`tests/update.cjs`、`tests/wake-browser.cjs`；可用 `JIANGUO_BROWSER_PATH` 指定浏览器，`JIANGUO_TEST_URL` 指向本地或 Pages 网址。`tests/upgrade.cjs` 验证旧缓存升级和设置保留，可用 `JIANGUO_UPGRADE_FROM` 指定旧版提交。`npm test` 运行计时、配置、像素排版及防息屏生命周期的单元测试。
+浏览器回归测试（需可用的 Playwright 与 Chrome）位于 `tests/browser.cjs`、`tests/regressions.cjs`、`tests/update.cjs`、`tests/wake-browser.cjs`、`tests/business-browser.cjs`；可用 `JIANGUO_BROWSER_PATH` 指定浏览器，`JIANGUO_TEST_URL` 指向本地或 Pages 网址。`tests/upgrade.cjs` 验证旧缓存升级和设置保留，可用 `JIANGUO_UPGRADE_FROM` 指定旧版提交。`npm test` 运行计时、配置、像素排版、表情组合及防息屏生命周期的单元测试。
 
 ## 真机验收
 
@@ -87,6 +107,7 @@ npm start
 
 - [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font)：12px 等宽简体中文，2026.10.16，OFL-1.1。原始许可和字形来源说明保存在 LICENSES/。
 - [NoSleep.js](https://github.com/richtr/NoSleep.js)：MIT，Rich Tibbett；兼容保活短片原样解码自其 src/media.js，固定提交和原始许可保存在 LICENSES/NoSleep-*。
+- [Twemoji](https://github.com/jdecked/twemoji)：17.0.3，Twitter, Inc. and other contributors / jdecked；原始 SVG 图形按 CC-BY-4.0 授权，聚合为离线数据但未修改图形，固定提交和完整许可保存在 LICENSES/Twemoji-*。
 - [codex-pet-naiwa](https://github.com/timerring/codex-pet-naiwa)：奶龙/奶蛙原精灵表；上游另致谢 [awesome_pets](https://github.com/Nitrogen216/awesome_pets) 和 [naiwa-pet](https://github.com/LynnShaw/naiwa-pet)。素材权利不属于本项目 MIT 许可范围，详见 LICENSES/naiwa-NOTICE.md。
 - 功能参考：[WebBanner](https://github.com/pauloklaus/web-banner)、[Hype Sign](https://github.com/howar31/hype-sign)。未复制这些项目的源码。
 - 后续方向：[AgentPager](https://github.com/afetmin/AgentPager) 的工作状态展示；实时接入尚未实现。

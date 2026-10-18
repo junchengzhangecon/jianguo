@@ -7,6 +7,7 @@ const assert=require('node:assert/strict');
 (async()=>{
   const root=path.join(__dirname,'..'),old={},baseline=process.env.JIANGUO_UPGRADE_FROM||'f1aea7e',target='jianguo-pixel-v'+require('../package.json').version;
   for(const name of ['index.html','styles.css','app.js','core.js','sw.js',...(baseline==='f1aea7e'?[]:['display.js'])])old[name]=execFileSync('git',['show',baseline+':'+name],{cwd:root});
+  try{old['wake.js']=execFileSync('git',['show',baseline+':wake.js'],{cwd:root,stdio:['ignore','pipe','ignore']});}catch(_){}
   const oldCache=old['sw.js'].toString().match(/jianguo-pixel-v[\d.]+/)[0];
   let updated=false;
   const server=http.createServer(async(req,res)=>{
