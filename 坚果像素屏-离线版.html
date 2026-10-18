@@ -864,6 +864,7 @@ Graphics by Twitter, Inc. and other contributors. Copyright 2023 jdecked.
 版本：17.0.3；固定提交 b6b55fef1e8636b540a6d016a4729ca8cdf2e60b。
 
 原始 SVG 图形未经修改，聚合到 emoji-data.js 中，按 CC-BY-4.0 授权。
+v1.3.1 起在浏览器运行时对上述图形采样、颜色量化并生成像素风展示；这些衍生展示同样注明来源并遵循 CC-BY-4.0。本项目的像素化效果不代表上游原始作品。
 完整许可见 Twemoji-CC-BY-4.0.txt；https://creativecommons.org/licenses/by/4.0/。
 这些图形不适用本项目自身代码的 MIT 授权。不代表原作者认可本项目。
 
@@ -957,6 +958,7 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
 .emoji-picker{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.emoji-picker button{background:#f6f6f0;border:1px solid var(--line);border-radius:7px;cursor:pointer;width:33px;height:33px;display:flex;align-items:center;justify-content:center;padding:4px}
 .emoji-picker button:hover,.emoji-picker button:focus-visible{background:#eaf2dc;outline:2px solid #648b36;outline-offset:1px}
 .emoji-credit{font-size:10px;color:#7b8075;line-height:1.6;margin-top:-8px}.emoji-credit a{color:inherit;text-underline-offset:2px}
+.pixel-emoji{image-rendering:crisp-edges;image-rendering:pixelated}
 body.present .emoji-credit{display:none}
 </style>
 </head>
@@ -975,7 +977,7 @@ body.present .emoji-credit{display:none}
       <button data-mode="nailong" class="nav-item"><span>☺</span>奶龙模式<small>07</small></button>
       <button data-mode="business" class="nav-item"><span>◈</span>营业状态<small>08</small></button>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.3.0</div></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span id="connection">本地优先 · 隐私留在设备</span><div class="edition">DESIGNED FOR A SECOND LIFE<br>坚果像素屏 / v1.3.1</div></div>
   </aside>
   <main>
     <header class="topbar"><span>你的桌面，有一点不一样。</span><div><button class="quiet" id="download">↓ 离线版</button><button class="quiet" id="share">↗ 分享配置</button></div></header>
@@ -1008,7 +1010,7 @@ body.present .emoji-credit{display:none}
               <label>此刻的状态</label><div id="businessPresets" class="business-presets" aria-label="营业状态预设"></div>
               <label for="businessLang">显示语言</label><select id="businessLang"><option value="both">中文 + English</option><option value="zh">仅中文</option><option value="en">English only</option></select>
               <label for="businessNote">补充一句（可选）</label><input id="businessNote" maxlength="80" placeholder="例如：14:30 回来 / 欢迎来聊聊">
-              <div class="toggle-row"><div><label for="businessEmoji">显示状态表情</label><p>彩色内置图标 · 断网也能显示</p></div><input id="businessEmoji" class="toggle" type="checkbox" role="switch"></div>
+              <div class="toggle-row"><div><label for="businessEmoji">显示状态表情</label><p>彩色像素图标 · 断网也能显示</p></div><input id="businessEmoji" class="toggle" type="checkbox" role="switch"></div>
               <p class="field-help">默认循环滚动，也可在下方关闭；不会改变像素文字模式的滚动开关。</p>
             </section>
             <section data-panel="clock" hidden><div class="info-box">显示设备本地时间与日期。<br>离线可用，时间以手机系统时钟为准。</div></section>
@@ -1114,15 +1116,70 @@ body.present .emoji-credit{display:none}
     return out;
   }
   function dataURL(key){return images[key]?'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(images[key]):'';}
+  // Sample once on the same 12px native grid as the text font. Cut soft edges
+  // and quantize colors so enlarged dots remain opaque, crisp and colorful.
+  function pixelCells(rgba,grid){
+    const cells=[],channel=v=>Math.round(v/17)*17,hex=v=>channel(v).toString(16).padStart(2,'0');
+    for(let y=0;y<grid;y++)for(let x=0;x<grid;x++){
+      const i=(y*grid+x)*4;if(rgba[i+3]<128)continue;
+      cells.push({x,y,color:'#'+hex(rgba[i])+hex(rgba[i+1])+hex(rgba[i+2])});
+    }
+    return cells;
+  }
+  const sources=Object.create(null);
+  function loadPixels(key){
+    if(sources[key])return sources[key];
+    return sources[key]=new Promise((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>{
+        try{
+          const c=document.createElement('canvas');c.width=c.height=12;const ctx=c.getContext('2d',{willReadFrequently:true});
+          ctx.drawImage(image,0,0,12,12);
+          const cells=pixelCells(ctx.getImageData(0,0,12,12).data,12);
+          ctx.clearRect(0,0,12,12);for(const cell of cells){ctx.fillStyle=cell.color;ctx.fillRect(cell.x,cell.y,1,1);}
+          resolve({cells,url:c.toDataURL('image/png')});
+        }catch(error){reject(error);}
+        image.onload=image.onerror=null;
+      };
+      image.onerror=()=>{image.onload=image.onerror=null;reject(new Error('Emoji pixels could not load: '+key));};
+      const url=dataURL(key);if(!url){reject(new Error('Unknown emoji: '+key));return;}image.src=url;
+    });
+  }
+  function pixelURL(key){return loadPixels(key).then(p=>p.url);}
+  function tile(cells,grid,width){
+    const c=document.createElement('canvas');c.width=c.height=width;const ctx=c.getContext('2d'),scale=grid/12,step=width/grid;
+    for(const cell of cells){
+      ctx.fillStyle=cell.color;
+      for(let dy=0;dy<scale;dy++)for(let dx=0;dx<scale;dx++){
+        const col=cell.x*scale+dx,row=cell.y*scale+dy,x=Math.round(col*step),y=Math.round(row*step);
+        const right=Math.min(Math.round((col+1)*step),Math.max(x+1,Math.round((col+.72)*step)));
+        const bottom=Math.min(Math.round((row+1)*step),Math.max(y+1,Math.round((row+.72)*step)));
+        ctx.fillRect(x,y,right-x,bottom-y);
+      }
+    }
+    return c;
+  }
   function createPainter(onReady,onError){
-    const cache=Object.create(null);
-    return function draw(ctx,key,x,y,size){
-      let image=cache[key];
-      if(!image){image=new Image();cache[key]=image;image.onload=onReady;image.onerror=()=>{if(onError)onError();};image.src=dataURL(key);}
-      if(image.complete&&image.naturalWidth){ctx.imageSmoothingEnabled=true;ctx.drawImage(image,x,y,size,size);}
+    const cache=Object.create(null),recent=[];
+    return function draw(ctx,key,x,y,size,grid=24,dpr=1){
+      let entry=cache[key];
+      if(!entry){entry=cache[key]={};loadPixels(key).then(p=>{entry.cells=p.cells;if(onReady)onReady();},()=>{if(onError)onError();});}
+      if(!entry.cells)return;
+      grid=Math.max(12,Math.round(grid/12)*12);const width=Math.max(grid,Math.round(size*dpr));
+      // Keep just one tile per used emoji. Scrolling reuses it; resizing replaces
+      // it instead of retaining an unbounded history of old phone dimensions.
+      if(!entry.tile||entry.grid!==grid||entry.tile.width!==width){if(entry.tile)entry.tile.width=entry.tile.height=0;entry.tile=tile(entry.cells,grid,width);entry.grid=grid;}
+      // Bound large GPU-backed tiles even for long messages with many distinct
+      // emoji. Retain tiny source pixels, so an evicted tile can return offline.
+      const index=recent.indexOf(entry);if(index>=0)recent.splice(index,1);
+      else if(recent.length===32){const old=recent.shift();old.tile.width=old.tile.height=0;old.tile=null;}
+      recent.push(entry);
+      // Fractional centering/scroll offsets would anti-alias the outer edge even
+      // with image smoothing off. Match source and destination device pixels.
+      ctx.imageSmoothingEnabled=false;ctx.drawImage(entry.tile,Math.round(x*dpr)/dpr,Math.round(y*dpr)/dpr,width/dpr,width/dpr);
     };
   }
-  const api={tokenize,dataURL,createPainter};root.JianguoEmoji=api;
+  const api={tokenize,dataURL,pixelCells,pixelURL,createPainter};root.JianguoEmoji=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:window);
 </script><script>(function(root){
@@ -1301,7 +1358,7 @@ body.present .emoji-credit{display:none}
   function persist(){write('jianguo.state.v1',state);write('jianguo.timers.v1',{timer,pomo,phase,count});}
   const fieldIDs=['text','color','size','speed','scroll','direction','dots','minutes','work','rest','name','role','organization','status','note','sound','businessLang','businessNote','businessEmoji'];
   const isScrolling=()=>state.mode==='business'?state.businessScroll:state.scroll;
-  function icon(value){const img=document.createElement('img'),token=E.tokenize(value).find(t=>t.type==='emoji');img.alt='';img.width=img.height=24;if(token)img.src=E.dataURL(token.key);return img;}
+  function icon(value){const img=document.createElement('img'),token=E.tokenize(value).find(t=>t.type==='emoji');img.alt='';img.width=img.height=24;img.className='pixel-emoji';img.hidden=true;if(token)E.pixelURL(token.key).then(url=>{img.src=url;img.hidden=false;},()=>{img.title='表情未加载，请重新打开页面';});return img;}
   C.businessPresets.forEach(p=>{const b=document.createElement('button');b.type='button';b.dataset.business=p.id;b.append(icon(p.emoji));const label=document.createElement('span'),zh=document.createElement('strong'),en=document.createElement('small');zh.textContent=p.zh;en.textContent=p.en;label.append(zh,en);b.append(label);$('businessPresets').append(b);});
   $('businessPresets').addEventListener('click',e=>{const b=e.target.closest('[data-business]');if(!b)return;state.businessState=b.dataset.business;updatePanels();invalidate();persist();});
   const emojiOptions=[['🙂','微笑'],['😂','大笑'],['🥰','开心'],['😴','睡觉'],['🤔','思考'],['😎','酷'],['👍','赞'],['👋','挥手'],['❤️','爱心'],['✨','闪亮'],['🔥','火'],['☕','咖啡'],['📚','书本'],['💻','电脑'],['🍅','番茄'],['🎉','庆祝'],['🟢','绿灯'],['🔴','红灯'],['🌙','月亮'],['⏸️','暂停']];
@@ -1387,7 +1444,7 @@ body.present .emoji-credit{display:none}
     const family=fontReady?'Pixel':'monospace';
     const measure=(s,size)=>{rctx.font=size+'px '+family;return E.tokenize(s).reduce((n,t)=>n+(t.type==='emoji'?size:rctx.measureText(t.value).width),0);};
     const layout=D.layout(text,{width,height,size:state.size,mode:state.mode,scroll,units:s=>E.tokenize(s).map(t=>t.value)},measure);
-    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素文字 · 彩色离线表情';
+    $('displayHint').textContent=layout.crowded?'内容较长，建议开启滚动或减少换行':'原生像素文字 · 彩色像素表情';
     renderPitch=layout.pitch;rasterW=layout.width;rasterH=layout.height;raster.width=rasterW;raster.height=rasterH;
     rctx.fillStyle='#fff';rctx.textBaseline='top';
     emojiPoints=[];
@@ -1415,7 +1472,7 @@ body.present .emoji-credit{display:none}
     }else draw(x0,y0);
     $('previewInfo').textContent=isScrolling()?'滚动显示 · '+state.speed+' 速度':'静态显示 · 自适应字号';dirty=false;
   }
-  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();for(const p of emojiPoints){const x=x0+p.x*renderPitch,y=y0+p.y*renderPitch,s=p.size*renderPitch;if(x+s>=0&&x<width)drawEmoji(ctx,p.key,x,y,s);}}
+  function draw(x0,y0){ctx.fillStyle=state.color;const size=renderPitch*.72;ctx.beginPath();for(const [x,y] of points){const px=x0+x*renderPitch,py=y0+y*renderPitch;if(px>=-renderPitch&&px<width&&py>=-renderPitch&&py<height)ctx.rect(px,py,size,size);}ctx.fill();for(const p of emojiPoints){const x=x0+p.x*renderPitch,y=y0+p.y*renderPitch,s=p.size*renderPitch;if(x+s>=0&&x<width)drawEmoji(ctx,p.key,x,y,s,p.size,Math.min(2,window.devicePixelRatio||1));}}
   async function loadFont(){try{if(document.fonts){await document.fonts.load('12px Pixel');fontReady=document.fonts.check('12px Pixel');}}catch(_){}invalidate();if(!fontReady)toast('像素字体加载失败，已使用系统字体');}
   let presentHide;
   let keepAwakeMode=read('jianguo.wake.v1');if(!['auto','compat','off'].includes(keepAwakeMode))keepAwakeMode='auto';

@@ -2,6 +2,14 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const E=require('../emoji.js');
 const D=require('../display.js');
+test('像素采样裁掉透明边缘，量化颜色并保留彩色与网格坐标',()=>{
+  const rgba=new Uint8ClampedArray([255,0,0,255, 0,0,255,127, 34,67,100,128, 0,255,0,255]);
+  assert.deepEqual(E.pixelCells(rgba,2),[
+    {x:0,y:0,color:'#ff0000'},
+    {x:0,y:1,color:'#224466'},
+    {x:1,y:1,color:'#00ff00'}
+  ]);
+});
 test('完整离线素材库中的每个序列都可识别为一个表情',()=>{
   const data=require('../emoji-data.js');assert.equal(Object.keys(data.images).length,4009);
   for(const key of Object.keys(data.images)){

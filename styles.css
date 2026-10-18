@@ -34,4 +34,5 @@ body.present #display{left:16px;top:16px;width:calc(100% - 32px);height:calc(100
 .emoji-picker{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.emoji-picker button{background:#f6f6f0;border:1px solid var(--line);border-radius:7px;cursor:pointer;width:33px;height:33px;display:flex;align-items:center;justify-content:center;padding:4px}
 .emoji-picker button:hover,.emoji-picker button:focus-visible{background:#eaf2dc;outline:2px solid #648b36;outline-offset:1px}
 .emoji-credit{font-size:10px;color:#7b8075;line-height:1.6;margin-top:-8px}.emoji-credit a{color:inherit;text-underline-offset:2px}
+.pixel-emoji{image-rendering:crisp-edges;image-rendering:pixelated}
 body.present .emoji-credit{display:none}

@@ -8,6 +8,7 @@ const assert=require('node:assert/strict');
   const root=path.join(__dirname,'..'),old={},baseline=process.env.JIANGUO_UPGRADE_FROM||'f1aea7e',target='jianguo-pixel-v'+require('../package.json').version;
   for(const name of ['index.html','styles.css','app.js','core.js','sw.js',...(baseline==='f1aea7e'?[]:['display.js'])])old[name]=execFileSync('git',['show',baseline+':'+name],{cwd:root});
   try{old['wake.js']=execFileSync('git',['show',baseline+':wake.js'],{cwd:root,stdio:['ignore','pipe','ignore']});}catch(_){}
+  for(const name of ['emoji.js','emoji-data.js'])try{old[name]=execFileSync('git',['show',baseline+':'+name],{cwd:root,stdio:['ignore','pipe','ignore'],maxBuffer:20*1024*1024});}catch(_){}
   const oldCache=old['sw.js'].toString().match(/jianguo-pixel-v[\d.]+/)[0];
   let updated=false;
   const server=http.createServer(async(req,res)=>{
@@ -36,6 +37,9 @@ const assert=require('node:assert/strict');
     await next.waitForFunction(async({target,oldCache})=>{const keys=await caches.keys();return keys.includes(target)&&!keys.includes(oldCache);},{target,oldCache});
     await ctx.setOffline(true);await next.reload();await next.locator('[data-mode=nailong]').click();await next.locator('#laugh').click();await next.waitForFunction(()=>document.getElementById('display').dataset.animation==='laughing');
     await next.waitForFunction(()=>document.getElementById('nailongSprite').naturalWidth===1536);
+    await next.locator('[data-mode=business]').click();await next.locator('[data-business=break]').click();
+    await next.waitForFunction(()=>document.getElementById('display').getAttribute('aria-label').includes('On Break'));
+    assert.match(await next.evaluate(()=>JianguoEmoji.pixelURL(JianguoEmoji.tokenize('☕')[0].key)),/^data:image\/png;base64,/);
     await ctx.close();console.log('升级验收通过：'+oldCache+' → '+target+' →关闭旧页激活→保留原文字→断网原仓库奶龙可用');
   }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exit(1);});
